@@ -36,3 +36,12 @@ class SimulationRequest(BaseModel):
     profile: LifeProfile
     assumptions: EconomicAssumptions
     mode: Literal["deterministic"] = "deterministic"
+from typing import List
+
+
+class SimulationResult(BaseModel):
+    months: List[int]
+    cash: List[float]
+    investments: List[float]
+    debt: List[float]
+    net_worth: List[float]

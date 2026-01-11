@@ -1,5 +1,8 @@
 from fastapi import FastAPI
 from .models import SimulationRequest
+from .simulate import run_deterministic
+from .models import SimulationResult
+
 
 app = FastAPI(
     title="LifeLedger API",
@@ -24,3 +27,8 @@ def schema_example():
         assumptions={}
     )
     return example.model_dump()
+
+@app.post("/simulate", response_model=SimulationResult)
+def simulate(req: SimulationRequest):
+    return run_deterministic(req)
+
