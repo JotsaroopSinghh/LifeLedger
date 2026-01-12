@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from .models import SimulationRequest
-from .simulate import run_deterministic
+from .simulate import run_deterministic, run_monte_carlo
 from .models import SimulationResult
 
 
@@ -28,7 +28,8 @@ def schema_example():
     )
     return example.model_dump()
 
-@app.post("/simulate", response_model=SimulationResult)
+@app.post("/simulate")
 def simulate(req: SimulationRequest):
-    return run_deterministic(req)
-
+    if req.mode == "deterministic":
+        return run_deterministic(req)
+    return run_monte_carlo(req)
