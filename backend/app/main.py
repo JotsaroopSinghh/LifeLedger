@@ -1,7 +1,7 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from .models import SimulationRequest
 from .simulate import run_deterministic, run_monte_carlo
-from .models import SimulationResult
+
 
 
 app = FastAPI(
@@ -32,4 +32,10 @@ def schema_example():
 def simulate(req: SimulationRequest):
     if req.mode == "deterministic":
         return run_deterministic(req)
-    return run_monte_carlo(req)
+
+    if req.mode == "monte_carlo":
+        if req.monte_carlo is None:
+            raise HTTPException(status_code=422, detail="monte_carlo params required for monte_carlo mode")
+        return run_monte_carlo(req)
+
+    raise HTTPException(status_code=400, detail="Invalid mode")
