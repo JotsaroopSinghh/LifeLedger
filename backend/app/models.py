@@ -1,5 +1,10 @@
 from pydantic import BaseModel, Field
 from typing import Literal
+from typing import List
+from pydantic import BaseModel, Field
+from typing import Literal, List, Optional
+
+
 
 
 class LifeProfile(BaseModel):
@@ -31,12 +36,18 @@ class EconomicAssumptions(BaseModel):
 
     invest_rate: float = Field(1.0, ge=0.0, le=1.0, description="Fraction of monthly savings invested (rest stays cash)")
 
+class MonteCarloParams(BaseModel):
+    simulations: int = Field(1000, ge=100, le=20000)
+    return_volatility_annual: float = Field(0.15, ge=0.0, le=1.0)
+    seed: Optional[int] = None
+
 
 class SimulationRequest(BaseModel):
     profile: LifeProfile
     assumptions: EconomicAssumptions
-    mode: Literal["deterministic"] = "deterministic"
-from typing import List
+    mode: Literal["deterministic", "monte_carlo"] = "deterministic"
+    monte_carlo: Optional[MonteCarloParams] = None
+
 
 
 class SimulationResult(BaseModel):
