@@ -56,3 +56,9 @@ class SimulationResult(BaseModel):
     investments: List[float]
     debt: List[float]
     net_worth: List[float]
+
+class MonteCarloSummary(BaseModel):
+    probability_of_ruin: float
+    final_net_worth_p10: float
+    final_net_worth_median: float
+    final_net_worth_p90: float
