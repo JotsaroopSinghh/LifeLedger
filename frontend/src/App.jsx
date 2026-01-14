@@ -126,6 +126,54 @@ export default function App() {
     });
   }
   
+  function applyPreset(name) {
+    setError("");
+    setResult(null);
+
+    if (name === "baseline") {
+      setStartCash(5000);
+      setStartInvestments(0);
+      setStartDebt(0);
+
+      setMonthlyIncome(3000);
+      setRent(1200);
+      setGroceries(350);
+      setTransport(250);
+      setSubscriptions(40);
+      setMisc(200);
+
+      setYears(30);
+      setAnnualReturn(0.06);
+      setAnnualIncomeGrowth(0.03);
+      setAnnualInflation(0.02);
+      setAnnualDebtInterest(0.05);
+      setMonthlyDebtPayment(0);
+      setInvestRate(1.0);
+
+      setSimulations(1000);
+      setReturnVolAnnual(0.15);
+      setSeed(42);
+      return;
+    }
+
+    if (name === "high_rent") {
+      setRent(1900);
+      return;
+    }
+
+    if (name === "car_payment") {
+      // car = higher monthly cost + maybe some debt
+      setTransport(450);
+      setStartDebt(8000);
+      setMonthlyDebtPayment(200);
+      return;
+    }
+
+    if (name === "income_shock") {
+      setMonthlyIncome(2400);
+      return;
+    }
+  }
 
 
 
@@ -154,6 +202,22 @@ export default function App() {
             Set your life inputs and assumptions. We’ll run thousands of simulated futures and
             estimate the chance you go negative at any point.
           </p>
+          <div className="sectionTitle">Presets</div>
+<div className="presetRow">
+  <button className="btnGhost" type="button" onClick={() => applyPreset("baseline")}>
+    Baseline
+  </button>
+  <button className="btnGhost" type="button" onClick={() => applyPreset("high_rent")}>
+    High Rent City
+  </button>
+  <button className="btnGhost" type="button" onClick={() => applyPreset("car_payment")}>
+    Buy a Car
+  </button>
+  <button className="btnGhost" type="button" onClick={() => applyPreset("income_shock")}>
+    Low Income Shock
+  </button>
+</div>
+
 
           <div className="sectionTitle">Starting State</div>
           <div className="row3">

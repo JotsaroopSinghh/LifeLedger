@@ -79,3 +79,25 @@
     margin-top:6px;
   }
   
+  .presetRow{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    margin-bottom:6px;
+  }
+  
+  .btnGhost{
+    border:1px solid var(--border);
+    background: rgba(255,255,255,0.05);
+    color: var(--text);
+    border-radius: 999px;
+    padding: 8px 12px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  
+  .btnGhost:hover{
+    background: rgba(255,255,255,0.08);
+  }
+  
