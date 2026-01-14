@@ -3,9 +3,6 @@ from .models import SimulationRequest, CompareRequest
 from .simulate import run_deterministic, run_monte_carlo
 from .compare import compare_scenarios
 
-
-
-
 app = FastAPI(
     title="LifeLedger API",
     version="0.1.0",
