@@ -57,3 +57,19 @@ class MonteCarloSummary(BaseModel):
     final_net_worth_p10: float
     final_net_worth_median: float
     final_net_worth_p90: float
+
+class CompareRequest(BaseModel):
+    baseline: SimulationRequest
+    scenarios: List[SimulationRequest]
+
+
+class ScenarioResult(BaseModel):
+    name: str
+    summary: MonteCarloSummary
+
+
+class CompareResult(BaseModel):
+    baseline: ScenarioResult
+    scenarios: List[ScenarioResult]
+    delta_probability_of_ruin: List[float]
+    delta_median_final_net_worth: List[float]

@@ -1,6 +1,8 @@
 from fastapi import FastAPI, HTTPException
-from .models import SimulationRequest
+from .models import SimulationRequest, CompareRequest
 from .simulate import run_deterministic, run_monte_carlo
+from .compare import compare_scenarios
+
 
 
 
@@ -39,3 +41,11 @@ def simulate(req: SimulationRequest):
         return run_monte_carlo(req)
 
     raise HTTPException(status_code=400, detail="Invalid mode")
+
+@app.post("/compare")
+def compare(req: CompareRequest):
+    try:
+        return compare_scenarios(req)
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e))
+
