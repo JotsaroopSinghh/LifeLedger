@@ -2,6 +2,8 @@ import { useMemo, useState } from "react";
 import "./styles.css";
 
 export default function App() {
+  const [showAdvanced, setShowAdvanced] = useState(false);
+
   // These are the inputs controlled by the users
   const [monthlyIncome, setMonthlyIncome] = useState(3000);
   const [rent, setRent] = useState(1200);
@@ -9,6 +11,7 @@ export default function App() {
   const [transport, setTransport] = useState(250);
   const [subscriptions, setSubscriptions] = useState(40);
   const [misc, setMisc] = useState(200);
+
 
   const [startCash, setStartCash] = useState(5000);
   const [startInvestments, setStartInvestments] = useState(0);
@@ -235,33 +238,62 @@ export default function App() {
             <Field label="Subscriptions ($/mo)" value={subscriptions} onChange={setSubscriptions} />
             <Field label="Misc ($/mo)" value={misc} onChange={setMisc} />
           </div>
-
-          <div className="sectionTitle">Assumptions</div>
-          <div className="row3">
-            <Field label="Horizon (years)" value={years} onChange={setYears} step="1" />
-            <Field label="Annual Return (μ)" value={annualReturn} onChange={setAnnualReturn} step="0.01" />
-            <Field label="Annual Volatility (σ)" value={returnVolAnnual} onChange={setReturnVolAnnual} step="0.01" />
-            <Field label="Income Growth" value={annualIncomeGrowth} onChange={setAnnualIncomeGrowth} step="0.01" />
-            <Field label="Inflation" value={annualInflation} onChange={setAnnualInflation} step="0.01" />
-            <Field label="Debt Interest" value={annualDebtInterest} onChange={setAnnualDebtInterest} step="0.01" />
-            <Field label="Debt Payment ($/mo)" value={monthlyDebtPayment} onChange={setMonthlyDebtPayment} step="10" />
-            <Field label="Invest Rate (0–1)" value={investRate} onChange={setInvestRate} step="0.05" />
-          </div>
-
-          <div className="sectionTitle">Monte Carlo</div>
-          <div className="row3">
-            <Field label="Simulations (N)" value={simulations} onChange={setSimulations} step="100" />
-            <Field label="Seed" value={seed} onChange={setSeed} step="1" />
-            <div className="btnWrap">
-            <button className="btnPrimary" type="button" onClick={runSimulation} disabled={isRunning}>
-  {isRunning ? "Running..." : "Run Simulation"}
-</button>
-<div className="btnHint">
-  {isRunning ? "Monte Carlo can take a few seconds." : "Backend: POST /simulate"}
+          <div className="advHeader">
+  <div className="sectionTitle" style={{ margin: 0 }}>Advanced Settings</div>
+  <button
+    className="btnGhost"
+    type="button"
+    onClick={() => setShowAdvanced((v) => !v)}
+  >
+    {showAdvanced ? "Hide" : "Show"}
+  </button>
 </div>
 
-            </div>
-          </div>
+{showAdvanced ? (
+  <>
+    <div className="sectionTitle">Assumptions</div>
+    <div className="row3">
+      <Field label="Horizon (years)" value={years} onChange={setYears} step="1" />
+      <Field label="Annual Return (μ)" value={annualReturn} onChange={setAnnualReturn} step="0.01" />
+      <Field label="Income Growth" value={annualIncomeGrowth} onChange={setAnnualIncomeGrowth} step="0.01" />
+      <Field label="Inflation" value={annualInflation} onChange={setAnnualInflation} step="0.01" />
+      <Field label="Debt Interest" value={annualDebtInterest} onChange={setAnnualDebtInterest} step="0.01" />
+      <Field label="Debt Payment ($/mo)" value={monthlyDebtPayment} onChange={setMonthlyDebtPayment} step="10" />
+      <Field label="Invest Rate (0–1)" value={investRate} onChange={setInvestRate} step="0.05" />
+    </div>
+
+    <div className="sectionTitle">Monte Carlo</div>
+    <div className="row3">
+      <Field label="Simulations (N)" value={simulations} onChange={setSimulations} step="100" />
+      <Field label="Annual Volatility (σ)" value={returnVolAnnual} onChange={setReturnVolAnnual} step="0.01" />
+      <Field label="Seed" value={seed} onChange={setSeed} step="1" />
+    </div>
+  </>
+) : (
+  <p className="muted" style={{ marginTop: 10 }}>
+    Using default assumptions and Monte Carlo settings. Click <b>Show</b> to adjust volatility,
+    horizon, inflation, and number of simulations.
+  </p>
+)}
+<div className="actionRow">
+  <button
+    className="btnPrimary"
+    type="button"
+    onClick={runSimulation}
+    disabled={isRunning}
+  >
+    {isRunning ? "Running..." : "Run Simulation"}
+  </button>
+
+  <div className="actionHint">
+    Runs Monte Carlo and estimates Probability of Ruin.
+  </div>
+</div>
+
+{isRunning ? <div className="loadingBar" /> : null}
+
+
+
         </section>
 
         <aside className="card">

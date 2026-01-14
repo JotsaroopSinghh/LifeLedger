@@ -66,3 +66,31 @@ button:focus-visible {
     background-color: #f9f9f9;
   }
 }
+
+.advHeader{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin-top:14px;
+}
+
+.loadingBar{
+  height:6px;
+  border-radius:999px;
+  margin-top:10px;
+  background: linear-gradient(90deg, rgba(124,92,255,0.2), rgba(124,92,255,0.85), rgba(34,197,94,0.65));
+  animation: shimmer 1.2s infinite linear;
+}
+
+@keyframes shimmer{
+  0%{ filter: brightness(0.9); }
+  50%{ filter: brightness(1.2); }
+  100%{ filter: brightness(0.9); }
+}
+
+.resultsTop{
+  display:flex;
+  justify-content:flex-end;
+  margin: 8px 0 10px;
+}
