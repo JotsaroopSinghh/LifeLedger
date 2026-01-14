@@ -23,10 +23,16 @@ export default function App() {
   const [monthlyDebtPayment, setMonthlyDebtPayment] = useState(0);
   const [investRate, setInvestRate] = useState(1.0);
 
-  // Monte Carlo settings
+  // Monte Carlo Simulation settings
   const [simulations, setSimulations] = useState(1000);
   const [returnVolAnnual, setReturnVolAnnual] = useState(0.15);
   const [seed, setSeed] = useState(42);
+
+
+  const [result, setResult] = useState(null);
+  const [error, setError] = useState("");
+  const [isRunning, setIsRunning] = useState(false);
+
 
   const requestBody = useMemo(() => {
     return {
@@ -79,6 +85,49 @@ export default function App() {
     returnVolAnnual,
     seed,
   ]);
+
+  async function runSimulation() {
+    setIsRunning(true);
+    setError("");
+    setResult(null);
+
+    try {
+      const res = await fetch("http://127.0.0.1:8000/simulate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(requestBody),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        // FastAPI errors usually come as { detail: ... }
+        const msg =
+          typeof data?.detail === "string"
+            ? data.detail
+            : JSON.stringify(data, null, 2);
+        setError(msg);
+        setIsRunning(false);
+        return;
+      }
+
+      setResult(data);
+      setIsRunning(false);
+    } catch (e) {
+      setError("Could not reach backend. Is FastAPI running on http://127.0.0.1:8000 ?");
+      setIsRunning(false);
+    }
+  }
+
+  function formatMoney(x) {
+    if (x === null || x === undefined) return "—";
+    return x.toLocaleString(undefined, {
+      maximumFractionDigits: 0,
+    });
+  }
+  
+
+
 
   return (
     <div className="page">
@@ -140,10 +189,13 @@ export default function App() {
             <Field label="Simulations (N)" value={simulations} onChange={setSimulations} step="100" />
             <Field label="Seed" value={seed} onChange={setSeed} step="1" />
             <div className="btnWrap">
-              <button className="btnPrimary" type="button">
-                Run Simulation
-              </button>
-              <div className="btnHint">-.</div>
+            <button className="btnPrimary" type="button" onClick={runSimulation} disabled={isRunning}>
+  {isRunning ? "Running..." : "Run Simulation"}
+</button>
+<div className="btnHint">
+  {isRunning ? "Monte Carlo can take a few seconds." : "Backend: POST /simulate"}
+</div>
+
             </div>
           </div>
         </section>
@@ -157,6 +209,53 @@ export default function App() {
           <pre className="code">
 {JSON.stringify(requestBody, null, 2)}
           </pre>
+          <div style={{ height: 14 }} />
+
+          <h2 className="h2">Simulation Results</h2>
+<p className="muted">
+  These results summarize thousands of possible futures under uncertainty.
+</p>
+
+{error ? <pre className="code codeError">{error}</pre> : null}
+
+{result ? (
+  <div className="resultsGrid">
+    <div className="resultCard danger">
+      <div className="resultLabel">Probability of Ruin</div>
+      <div className="resultValue">
+        {(result.probability_of_ruin * 100).toFixed(1)}%
+      </div>
+      <div className="resultHint">
+        Chance net worth goes negative at any point
+      </div>
+    </div>
+
+    <div className="resultCard">
+      <div className="resultLabel">Downside (10th percentile)</div>
+      <div className="resultValue">
+        ${formatMoney(result.final_net_worth_p10)}
+      </div>
+    </div>
+
+    <div className="resultCard highlight">
+      <div className="resultLabel">Median Outcome</div>
+      <div className="resultValue">
+        ${formatMoney(result.final_net_worth_median)}
+      </div>
+    </div>
+
+    <div className="resultCard">
+      <div className="resultLabel">Upside (90th percentile)</div>
+      <div className="resultValue">
+        ${formatMoney(result.final_net_worth_p90)}
+      </div>
+    </div>
+  </div>
+) : (
+  <div className="emptyState">Run a simulation to see results.</div>
+)}
+
+
         </aside>
       </main>
 

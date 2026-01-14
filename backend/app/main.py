@@ -1,7 +1,10 @@
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+
 from .models import SimulationRequest, CompareRequest
 from .simulate import run_deterministic, run_monte_carlo
 from .compare import compare_scenarios
+
 
 app = FastAPI(
     title="LifeLedger API",
@@ -9,6 +12,13 @@ app = FastAPI(
     description="Backend for a life decision financial simulator."
 )
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.get("/health")
 def health():
