@@ -571,3 +571,26 @@ body{
   font-size: 12px;
   text-align: center;
 }
+
+.footer {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  align-items: center;
+  padding: 24px 0;
+  font-size: 13px;
+  color: #9ca3af;
+}
+
+.footerLink {
+  color: #a78bfa;
+  text-decoration: none;
+}
+
+.footerLink:hover {
+  text-decoration: underline;
+}
+
+.footerSep {
+  opacity: 0.5;
+}

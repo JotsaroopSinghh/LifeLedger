@@ -15,22 +15,20 @@ This module implements two modes:
 
 Key definitions:
 - Net worth = cash + investments - debt
-- Ruin occurs if net worth < 0 at any month within the horizon.
+- Ruin occurs if net worth drops below 0 at any month AFTER the simulation starts (month > 0).
+  This avoids counting "starting in debt" as immediate ruin.
 """
 
 import numpy as np
 from .models import SimulationRequest, SimulationResult, MonteCarloSummary
-from .models import SimulationRequest, SimulationResult
-import numpy as np
-from .models import MonteCarloSummary
 
 
 
 def annual_to_monthly_rate(annual: float) -> float:
-#We convert the annual compound rate to monthly compound rate
-#    Math:
-#        (1 + r_annual) = (1 + r_month) ^ 12
-#        => r_month = (1 + r_annual)^(1/12) - 1
+    """We convert the annual compound rate to monthly compound rate
+    Math:
+        (1 + r_annual) = (1 + r_month) ^ 12
+        => r_month = (1 + r_annual)^(1/12) - 1"""
     return (1.0 + annual) ** (1.0 / 12.0) - 1.0
 
 
@@ -78,7 +76,8 @@ def run_deterministic(req: SimulationRequest) -> SimulationResult:
         cash -= payment
         debt -= payment
 
-        # 5) If cash is negative, we assume you borrow to cover it, net worth becomes negative
+        # 5) If cash goes negative, we assume the deficit is financed by borrowing.
+        # This keeps cash from staying negative and makes affordability problems show up as rising debt.
         if cash < 0:
             debt += (-cash)
             cash = 0.0
@@ -207,8 +206,13 @@ def run_monte_carlo(req: SimulationRequest) -> MonteCarloSummary:
             misc *= (1.0 + r_infl_m)
 
             nw = cash + inv - debt
-            if nw < 0:
+
+            # "Ruin" is defined as net worth crossing below 0 AFTER the simulation begins.
+            # This avoids counting starting debt as immediate ruin and makes the metric reflect
+            # the risk that a decision/path causes insolvency later.
+            if _m > 0 and nw < 0:
                 ruined = True
+
 
         if ruined:
             ruin_count += 1

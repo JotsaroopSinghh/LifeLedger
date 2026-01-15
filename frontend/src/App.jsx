@@ -128,47 +128,51 @@ export default function App() {
     setResult(null);
 
     if (name === "baseline") {
-      setStartCash(5000);
+      setStartCash(3000);
       setStartInvestments(0);
-      setStartDebt(0);
-
-      setMonthlyIncome(3000);
-      setRent(1200);
-      setGroceries(350);
-      setTransport(250);
-      setSubscriptions(40);
-      setMisc(200);
-
+      setStartDebt(4000);
+      setMonthlyIncome(2800);
+      setRent(1300);
+      setGroceries(400);
+      setTransport(300);
+      setSubscriptions(60);
+      setMisc(250);
       setYears(30);
       setAnnualReturn(0.06);
-      setAnnualIncomeGrowth(0.03);
-      setAnnualInflation(0.02);
-      setAnnualDebtInterest(0.05);
-      setMonthlyDebtPayment(0);
-      setInvestRate(1.0);
-
-      setSimulations(1000);
-      setReturnVolAnnual(0.15);
+      setAnnualIncomeGrowth(0.025);
+      setAnnualInflation(0.025);
+      setAnnualDebtInterest(0.06);
+      setMonthlyDebtPayment(150);
+      setInvestRate(0.7);
+      setSimulations(2000);
+      setReturnVolAnnual(0.18);
       setSeed(42);
       return;
     }
+    
+    
 
     if (name === "high_rent") {
       setRent(1900);
+      applyPreset("baseline");
       return;
     }
 
     if (name === "car_payment") {
+      applyPreset("baseline");
       setTransport(450);
-      setStartDebt(8000);
-      setMonthlyDebtPayment(200);
+      setStartDebt(12000);        // car loan principal
+      setMonthlyDebtPayment(300); // payment
+      setMisc(300);               // extra maintenance/insurance buffer
       return;
     }
-
+    
     if (name === "income_shock") {
+      applyPreset("baseline");
       setMonthlyIncome(2400);
       return;
     }
+    
   }
 
   function formatMoney(x) {
@@ -242,9 +246,19 @@ export default function App() {
         />
       )}
 
-      <footer className="footer">
-      🐈 By Jotsaroop Singh
-      </footer>
+        <footer className="footer">
+          <span>By Jotsaroop Singh</span>
+          <span className="footerSep">•</span>
+          <a
+            href="https://github.com/JotsaroopSinghh/LifeLedger.git"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="footerLink"
+          >
+            View source on GitHub
+          </a>
+        </footer>
+
 
       {showInfo ? <InfoModal onClose={() => setShowInfo(false)} /> : null}
     </div>
@@ -398,7 +412,7 @@ function Simulator(props) {
             Buy a Car
           </button>
           <button className="btnGhost" type="button" onClick={() => applyPreset("income_shock")}>
-            Low Income Shock
+            Income Shock
           </button>
         </div>
 
@@ -480,7 +494,7 @@ function Simulator(props) {
                 {(result.probability_of_ruin * 100).toFixed(1)}%
               </div>
               <div className="resultHint">
-                Chance net worth goes negative at any point
+              Chance net worth drops below $0 after the simulation starts
               </div>
             </div>
 
@@ -552,8 +566,12 @@ function InfoModal({ onClose }) {
           <div className="modalSection">
             <div className="modalH">Probability of Ruin</div>
             <div className="muted">
-              We run N simulated futures. If net worth drops below zero in any month, that path is “ruined.”
+            <div className="modalH">Probability of Ruin</div>
+            <div className="muted">
+              We run N simulated futures. A path is counted as “ruined” if net worth drops below $0
+              after the simulation begins (we don’t count starting in debt as immediate ruin).
               Probability of Ruin = ruined_paths / total_paths.
+            </div>
             </div>
           </div>
 
