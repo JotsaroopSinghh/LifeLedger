@@ -2,9 +2,10 @@ import { useMemo, useState } from "react";
 import "./styles.css";
 
 export default function App() {
-  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [view, setView] = useState("landing"); // landing | simulator
+  const [showInfo, setShowInfo] = useState(false);
 
-  // These are the inputs controlled by the users
+  //Inputs
   const [monthlyIncome, setMonthlyIncome] = useState(3000);
   const [rent, setRent] = useState(1200);
   const [groceries, setGroceries] = useState(350);
@@ -12,12 +13,10 @@ export default function App() {
   const [subscriptions, setSubscriptions] = useState(40);
   const [misc, setMisc] = useState(200);
 
-
   const [startCash, setStartCash] = useState(5000);
   const [startInvestments, setStartInvestments] = useState(0);
   const [startDebt, setStartDebt] = useState(0);
 
-  // Assumptions (world settings)
   const [years, setYears] = useState(30);
   const [annualReturn, setAnnualReturn] = useState(0.06);
   const [annualIncomeGrowth, setAnnualIncomeGrowth] = useState(0.03);
@@ -26,16 +25,15 @@ export default function App() {
   const [monthlyDebtPayment, setMonthlyDebtPayment] = useState(0);
   const [investRate, setInvestRate] = useState(1.0);
 
-  // Monte Carlo Simulation settings
   const [simulations, setSimulations] = useState(1000);
   const [returnVolAnnual, setReturnVolAnnual] = useState(0.15);
   const [seed, setSeed] = useState(42);
 
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
   const [isRunning, setIsRunning] = useState(false);
-
 
   const requestBody = useMemo(() => {
     return {
@@ -104,7 +102,6 @@ export default function App() {
       const data = await res.json();
 
       if (!res.ok) {
-        // FastAPI errors usually come as { detail: ... }
         const msg =
           typeof data?.detail === "string"
             ? data.detail
@@ -117,18 +114,13 @@ export default function App() {
       setResult(data);
       setIsRunning(false);
     } catch (e) {
-      setError("Could not reach backend. Is FastAPI running on http://127.0.0.1:8000 ?");
+      setError(
+        "Could not reach backend. Is FastAPI running on http://127.0.0.1:8000 ?"
+      );
       setIsRunning(false);
     }
   }
 
-  function formatMoney(x) {
-    if (x === null || x === undefined) return "—";
-    return x.toLocaleString(undefined, {
-      maximumFractionDigits: 0,
-    });
-  }
-  
   function applyPreset(name) {
     setError("");
     setResult(null);
@@ -165,7 +157,6 @@ export default function App() {
     }
 
     if (name === "car_payment") {
-      // car = higher monthly cost + maybe some debt
       setTransport(450);
       setStartDebt(8000);
       setMonthlyDebtPayment(200);
@@ -178,187 +169,344 @@ export default function App() {
     }
   }
 
-
+  function formatMoney(x) {
+    if (x === null || x === undefined) return "—";
+    return Number(x).toLocaleString(undefined, { maximumFractionDigits: 0 });
+  }
 
   return (
     <div className="page">
-      <header className="topbar">
-        <div className="brand">
-          <div className="logo">LL</div>
-          <div>
-            <div className="brandTitle">LifeLedger</div>
-            <div className="brandSub">Stochastic Financial Decision Engine</div>
-          </div>
-        </div>
-
-        <div className="tagRow">
-          <span className="tag">Monte Carlo</span>
-          <span className="tag">Probability of Ruin</span>
-          <span className="tag">FastAPI</span>
-        </div>
-      </header>
-
-      <main className="grid">
-        <section className="card">
-          <h2 className="h2">Scenario Builder</h2>
-          <p className="muted">
-            Set your life inputs and assumptions. We’ll run thousands of simulated futures and
-            estimate the chance you go negative at any point.
-          </p>
-          <div className="sectionTitle">Presets</div>
-<div className="presetRow">
-  <button className="btnGhost" type="button" onClick={() => applyPreset("baseline")}>
-    Baseline
-  </button>
-  <button className="btnGhost" type="button" onClick={() => applyPreset("high_rent")}>
-    High Rent City
-  </button>
-  <button className="btnGhost" type="button" onClick={() => applyPreset("car_payment")}>
-    Buy a Car
-  </button>
-  <button className="btnGhost" type="button" onClick={() => applyPreset("income_shock")}>
-    Low Income Shock
-  </button>
-</div>
+      <TopNav
+  onGoLanding={() => setView("landing")}
+  onOpenInfo={() => setShowInfo(true)}
+  showBack={view === "simulator"}
+  onGoBack={() => setView("landing")}
+/>
 
 
-          <div className="sectionTitle">Starting State</div>
-          <div className="row3">
-            <Field label="Start Cash ($)" value={startCash} onChange={setStartCash} />
-            <Field label="Start Investments ($)" value={startInvestments} onChange={setStartInvestments} />
-            <Field label="Start Debt ($)" value={startDebt} onChange={setStartDebt} />
-          </div>
+      {view === "landing" ? (
+      <Landing onEnter={() => setView("simulator")} />
 
-          <div className="sectionTitle">Monthly Cashflow</div>
-          <div className="row3">
-            <Field label="Income ($/mo)" value={monthlyIncome} onChange={setMonthlyIncome} />
-            <Field label="Rent ($/mo)" value={rent} onChange={setRent} />
-            <Field label="Groceries ($/mo)" value={groceries} onChange={setGroceries} />
-            <Field label="Transport ($/mo)" value={transport} onChange={setTransport} />
-            <Field label="Subscriptions ($/mo)" value={subscriptions} onChange={setSubscriptions} />
-            <Field label="Misc ($/mo)" value={misc} onChange={setMisc} />
-          </div>
-          <div className="advHeader">
-  <div className="sectionTitle" style={{ margin: 0 }}>Advanced Settings</div>
-  <button
-    className="btnGhost"
-    type="button"
-    onClick={() => setShowAdvanced((v) => !v)}
-  >
-    {showAdvanced ? "Hide" : "Show"}
-  </button>
-</div>
-
-{showAdvanced ? (
-  <>
-    <div className="sectionTitle">Assumptions</div>
-    <div className="row3">
-      <Field label="Horizon (years)" value={years} onChange={setYears} step="1" />
-      <Field label="Annual Return (μ)" value={annualReturn} onChange={setAnnualReturn} step="0.01" />
-      <Field label="Income Growth" value={annualIncomeGrowth} onChange={setAnnualIncomeGrowth} step="0.01" />
-      <Field label="Inflation" value={annualInflation} onChange={setAnnualInflation} step="0.01" />
-      <Field label="Debt Interest" value={annualDebtInterest} onChange={setAnnualDebtInterest} step="0.01" />
-      <Field label="Debt Payment ($/mo)" value={monthlyDebtPayment} onChange={setMonthlyDebtPayment} step="10" />
-      <Field label="Invest Rate (0–1)" value={investRate} onChange={setInvestRate} step="0.05" />
-    </div>
-
-    <div className="sectionTitle">Monte Carlo</div>
-    <div className="row3">
-      <Field label="Simulations (N)" value={simulations} onChange={setSimulations} step="100" />
-      <Field label="Annual Volatility (σ)" value={returnVolAnnual} onChange={setReturnVolAnnual} step="0.01" />
-      <Field label="Seed" value={seed} onChange={setSeed} step="1" />
-    </div>
-  </>
-) : (
-  <p className="muted" style={{ marginTop: 10 }}>
-    Using default assumptions and Monte Carlo settings. Click <b>Show</b> to adjust volatility,
-    horizon, inflation, and number of simulations.
-  </p>
-)}
-<div className="actionRow">
-  <button
-    className="btnPrimary"
-    type="button"
-    onClick={runSimulation}
-    disabled={isRunning}
-  >
-    {isRunning ? "Running..." : "Run Simulation"}
-  </button>
-
-  <div className="actionHint">
-    Runs Monte Carlo and estimates Probability of Ruin.
-  </div>
-</div>
-
-{isRunning ? <div className="loadingBar" /> : null}
-
-
-
-        </section>
-
-        <aside className="card">
-          <h2 className="h2">Request Preview</h2>
-          <p className="muted">
-            -
-          </p>
-
-          <pre className="code">
-{JSON.stringify(requestBody, null, 2)}
-          </pre>
-          <div style={{ height: 14 }} />
-
-          <h2 className="h2">Simulation Results</h2>
-<p className="muted">
-  These results summarize thousands of possible futures under uncertainty.
-</p>
-
-{error ? <pre className="code codeError">{error}</pre> : null}
-
-{result ? (
-  <div className="resultsGrid">
-    <div className="resultCard danger">
-      <div className="resultLabel">Probability of Ruin</div>
-      <div className="resultValue">
-        {(result.probability_of_ruin * 100).toFixed(1)}%
-      </div>
-      <div className="resultHint">
-        Chance net worth goes negative at any point
-      </div>
-    </div>
-
-    <div className="resultCard">
-      <div className="resultLabel">Downside (10th percentile)</div>
-      <div className="resultValue">
-        ${formatMoney(result.final_net_worth_p10)}
-      </div>
-    </div>
-
-    <div className="resultCard highlight">
-      <div className="resultLabel">Median Outcome</div>
-      <div className="resultValue">
-        ${formatMoney(result.final_net_worth_median)}
-      </div>
-    </div>
-
-    <div className="resultCard">
-      <div className="resultLabel">Upside (90th percentile)</div>
-      <div className="resultValue">
-        ${formatMoney(result.final_net_worth_p90)}
-      </div>
-    </div>
-  </div>
-) : (
-  <div className="emptyState">Run a simulation to see results.</div>
-)}
-
-
-        </aside>
-      </main>
+      ) : (
+        <Simulator
+          showAdvanced={showAdvanced}
+          setShowAdvanced={setShowAdvanced}
+          applyPreset={applyPreset}
+          requestBody={requestBody}
+          runSimulation={runSimulation}
+          isRunning={isRunning}
+          error={error}
+          result={result}
+          formatMoney={formatMoney}
+          // fields
+          startCash={startCash}
+          setStartCash={setStartCash}
+          startInvestments={startInvestments}
+          setStartInvestments={setStartInvestments}
+          startDebt={startDebt}
+          setStartDebt={setStartDebt}
+          monthlyIncome={monthlyIncome}
+          setMonthlyIncome={setMonthlyIncome}
+          rent={rent}
+          setRent={setRent}
+          groceries={groceries}
+          setGroceries={setGroceries}
+          transport={transport}
+          setTransport={setTransport}
+          subscriptions={subscriptions}
+          setSubscriptions={setSubscriptions}
+          misc={misc}
+          setMisc={setMisc}
+          years={years}
+          setYears={setYears}
+          annualReturn={annualReturn}
+          setAnnualReturn={setAnnualReturn}
+          annualIncomeGrowth={annualIncomeGrowth}
+          setAnnualIncomeGrowth={setAnnualIncomeGrowth}
+          annualInflation={annualInflation}
+          setAnnualInflation={setAnnualInflation}
+          annualDebtInterest={annualDebtInterest}
+          setAnnualDebtInterest={setAnnualDebtInterest}
+          monthlyDebtPayment={monthlyDebtPayment}
+          setMonthlyDebtPayment={setMonthlyDebtPayment}
+          investRate={investRate}
+          setInvestRate={setInvestRate}
+          simulations={simulations}
+          setSimulations={setSimulations}
+          returnVolAnnual={returnVolAnnual}
+          setReturnVolAnnual={setReturnVolAnnual}
+          seed={seed}
+          setSeed={setSeed}
+        />
+      )}
 
       <footer className="footer">
-        Not financial advice. This tool is for learning and decision comparison.
+      🐈 By Jotsaroop Singh
       </footer>
+
+      {showInfo ? <InfoModal onClose={() => setShowInfo(false)} /> : null}
     </div>
+  );
+}
+
+function TopNav({ onGoLanding, onOpenInfo, showBack, onGoBack }) {
+  return (
+    <header className="topbar">
+      <div className="brand" role="button" tabIndex={0} onClick={onGoLanding}>
+        <div className="logo">LL.</div>
+        <div>
+          <div className="brandTitle">LifeLedger</div>
+          <div className="brandSub">Stochastic Financial Decision Engine</div>
+        </div>
+      </div>
+
+      <div className="navActions">
+        {showBack ? (
+          <button className="navLink active" type="button" onClick={onGoBack}>
+            ← Back
+          </button>
+        ) : null}
+
+        <button
+          className="iconBtn"
+          type="button"
+          onClick={onOpenInfo}
+          title="How it works"
+        >
+          ⓘ
+        </button>
+      </div>
+    </header>
+  );
+}
+
+
+function Landing({ onEnter }) {
+  return (
+    <main className="landingNew">
+      <section className="gate">
+        <div className="gateTop">
+          <div className="gateTitle">LifeLedger</div>
+          <div className="gateSub">
+            Stochastic Financial Decision Engine
+          </div>
+        </div>
+
+        <div className="gateGrid">
+          <div className="gatePanel">
+            <div className="panelHeader">What it does</div>
+            <div className="panelBody">
+              <p className="panelLine">
+                • Simulates your finances month-by-month over a chosen horizon.
+              </p>
+              <p className="panelLine">
+                • Adds randomness to investment returns (Monte Carlo).
+              </p>
+              <p className="panelLine">
+                • Outputs a risk metric: <b>Probability of Ruin</b>.
+              </p>
+            </div>
+
+            <div className="panelFooter">
+              <span className="chip">Python</span>
+              <span className="chip">FastAPI</span>
+              <span className="chip">React</span>
+            </div>
+          </div>
+
+          <div className="gateCenter">
+            <div className="centerGlow" />
+            <button className="ctaBig" type="button" onClick={onEnter}>
+              Start Simulation
+            </button>
+            <div className="centerHint">
+              One click → scenario presets → run simulation → understand risk.
+            </div>
+          </div>
+
+          <div className="gatePanel">
+            <div className="panelHeader">Engine spec</div>
+            <div className="panelBody mono">
+              <div className="specRow">
+                <span className="specKey">Primary metric</span>
+                <span className="specVal">P(ruin)</span>
+              </div>
+              <div className="specRow">
+                <span className="specKey">Summary stats</span>
+                <span className="specVal">p10 / median / p90</span>
+              </div>
+              <div className="specRow">
+                <span className="specKey">Model</span>
+                <span className="specVal">cash + invest − debt</span>
+              </div>
+              <div className="specRow">
+                <span className="specKey">Inputs</span>
+                <span className="specVal">income, rent, debt…</span>
+              </div>
+            </div>
+
+            <div className="panelFooter subtle">
+              <span className="muted" style={{ fontSize: 12 }}>
+                Use the ⓘ button for definitions and how it works.
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div className="gateBottom muted">
+          Not financial advice.
+        </div>
+      </section>
+    </main>
+  );
+}
+
+
+
+function Simulator(props) {
+  const {
+    showAdvanced,
+    setShowAdvanced,
+    applyPreset,
+    requestBody,
+    runSimulation,
+    isRunning,
+    error,
+    result,
+    formatMoney,
+  } = props;
+
+  return (
+    <main className="grid">
+      <section className="card">
+        <h2 className="h2">Scenario Builder</h2>
+        <p className="muted">
+          Build a scenario, run Monte Carlo, and view downside outcomes + Probability of Ruin.
+        </p>
+
+        <div className="sectionTitle">Presets</div>
+        <div className="presetRow">
+          <button className="btnGhost" type="button" onClick={() => applyPreset("baseline")}>
+            Baseline
+          </button>
+          <button className="btnGhost" type="button" onClick={() => applyPreset("high_rent")}>
+            High Rent City
+          </button>
+          <button className="btnGhost" type="button" onClick={() => applyPreset("car_payment")}>
+            Buy a Car
+          </button>
+          <button className="btnGhost" type="button" onClick={() => applyPreset("income_shock")}>
+            Low Income Shock
+          </button>
+        </div>
+
+        <div className="sectionTitle">Starting State</div>
+        <div className="row3">
+          <Field label="Start Cash ($)" value={props.startCash} onChange={props.setStartCash} />
+          <Field label="Start Investments ($)" value={props.startInvestments} onChange={props.setStartInvestments} />
+          <Field label="Start Debt ($)" value={props.startDebt} onChange={props.setStartDebt} />
+        </div>
+
+        <div className="sectionTitle">Monthly Cashflow</div>
+        <div className="row3">
+          <Field label="Income ($/mo)" value={props.monthlyIncome} onChange={props.setMonthlyIncome} />
+          <Field label="Rent ($/mo)" value={props.rent} onChange={props.setRent} />
+          <Field label="Groceries ($/mo)" value={props.groceries} onChange={props.setGroceries} />
+          <Field label="Transport ($/mo)" value={props.transport} onChange={props.setTransport} />
+          <Field label="Subscriptions ($/mo)" value={props.subscriptions} onChange={props.setSubscriptions} />
+          <Field label="Misc ($/mo)" value={props.misc} onChange={props.setMisc} />
+        </div>
+
+        <div className="advHeader">
+          <div className="sectionTitle" style={{ margin: 0 }}>
+            Advanced Settings
+          </div>
+          <button className="btnGhost" type="button" onClick={() => setShowAdvanced((v) => !v)}>
+            {showAdvanced ? "Hide" : "Show"}
+          </button>
+        </div>
+
+        {showAdvanced ? (
+          <>
+            <div className="sectionTitle">Assumptions</div>
+            <div className="row3">
+              <Field label="Horizon (years)" value={props.years} onChange={props.setYears} step="1" />
+              <Field label="Annual Return (μ)" value={props.annualReturn} onChange={props.setAnnualReturn} step="0.01" />
+              <Field label="Income Growth" value={props.annualIncomeGrowth} onChange={props.setAnnualIncomeGrowth} step="0.01" />
+              <Field label="Inflation" value={props.annualInflation} onChange={props.setAnnualInflation} step="0.01" />
+              <Field label="Debt Interest" value={props.annualDebtInterest} onChange={props.setAnnualDebtInterest} step="0.01" />
+              <Field label="Debt Payment ($/mo)" value={props.monthlyDebtPayment} onChange={props.setMonthlyDebtPayment} step="10" />
+              <Field label="Invest Rate (0–1)" value={props.investRate} onChange={props.setInvestRate} step="0.05" />
+            </div>
+
+            <div className="sectionTitle">Monte Carlo</div>
+            <div className="row3">
+              <Field label="Simulations (N)" value={props.simulations} onChange={props.setSimulations} step="100" />
+              <Field label="Annual Volatility (σ)" value={props.returnVolAnnual} onChange={props.setReturnVolAnnual} step="0.01" />
+              <Field label="Seed" value={props.seed} onChange={props.setSeed} step="1" />
+            </div>
+          </>
+        ) : (
+          <p className="muted" style={{ marginTop: 10 }}>
+            Using default assumptions and Monte Carlo settings for investment returns. Click <b>Show</b> to adjust volatility,
+            horizon, inflation, and number of simulations.
+          </p>
+        )}
+
+        <div className="actionRow">
+          <button className="btnPrimary" type="button" onClick={runSimulation} disabled={isRunning}>
+            {isRunning ? "Running..." : "Run Simulation"}
+          </button>
+        </div>
+
+        {isRunning ? <div className="loadingBar" /> : null}
+
+        <div style={{ height: 10 }} />
+      </section>
+
+      <aside className="card">
+        <h2 className="h2">Results</h2>
+        <p className="muted">Summary of thousands of futures.</p>
+
+        {error ? <pre className="code codeError">{error}</pre> : null}
+
+        {result ? (
+          <div className="resultsGrid">
+            <div className="resultCard danger">
+              <div className="resultLabel">Probability of Ruin</div>
+              <div className="resultValue">
+                {(result.probability_of_ruin * 100).toFixed(1)}%
+              </div>
+              <div className="resultHint">
+                Chance net worth goes negative at any point
+              </div>
+            </div>
+
+            <div className="resultCard">
+              <div className="resultLabel">Downside (10th percentile)</div>
+              <div className="resultValue">${formatMoney(result.final_net_worth_p10)}</div>
+            </div>
+
+            <div className="resultCard highlight">
+              <div className="resultLabel">Median Outcome</div>
+              <div className="resultValue">${formatMoney(result.final_net_worth_median)}</div>
+            </div>
+
+            <div className="resultCard">
+              <div className="resultLabel">Upside (90th percentile)</div>
+              <div className="resultValue">${formatMoney(result.final_net_worth_p90)}</div>
+            </div>
+
+            <div className="cardSub">
+              <div className="cardSubTitle">Request Preview</div>
+              <pre className="code">{JSON.stringify(requestBody, null, 2)}</pre>
+            </div>
+          </div>
+        ) : (
+          <div className="emptyState">Run a simulation to see results.</div>
+        )}
+      </aside>
+    </main>
   );
 }
 
@@ -374,5 +522,60 @@ function Field({ label, value, onChange, step = "1" }) {
         onChange={(e) => onChange(e.target.value)}
       />
     </label>
+  );
+}
+
+function InfoModal({ onClose }) {
+  return (
+    <div className="modalOverlay" role="dialog" aria-modal="true">
+      <div className="modal">
+        <div className="modalTop">
+          <div>
+            <div className="modalTitle">How LifeLedger works</div>
+          </div>
+          <button className="iconBtn" type="button" onClick={onClose} title="Close">
+            ✕
+          </button>
+        </div>
+
+        <div className="modalBody">
+          <div className="modalSection">
+            <div className="modalH">What is being simulated?</div>
+            <div className="muted">
+              Each month, we update a financial state: cash, investments, debt, income, expenses, and net worth.
+              Investments grow with a random monthly return.
+            </div>
+          </div>
+
+          <div className="modalSection">
+            <div className="modalH">Probability of Ruin</div>
+            <div className="muted">
+              We run N simulated futures. If net worth drops below zero in any month, that path is “ruined.”
+              Probability of Ruin = ruined_paths / total_paths.
+            </div>
+          </div>
+
+          <div className="modalSection">
+            <div className="modalH">Percentiles (p10 / median / p90)</div>
+            <div className="muted">
+              Final net worth varies across futures. p10 is a bad-case outcome, median is typical, p90 is a great-case.
+            </div>
+          </div>
+
+          <div className="modalSection">
+            <div className="modalH">Why this is useful</div>
+            <div className="muted">
+              It compares decisions by risk, not just average return. For example: “How much does buying a car increase ruin risk?”
+            </div>
+          </div>
+        </div>
+
+        <div className="modalBottom">
+          <button className="btnPrimary" type="button" onClick={onClose}>
+            Got it
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
