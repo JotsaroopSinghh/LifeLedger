@@ -2,32 +2,34 @@ import { useMemo, useState } from "react";
 import "./styles.css";
 
 export default function App() {
-  const [view, setView] = useState("landing"); // landing | simulator
+  const [view, setView] = useState("landing");
   const [showInfo, setShowInfo] = useState(false);
 
   //Inputs
-  const [monthlyIncome, setMonthlyIncome] = useState(3000);
-  const [rent, setRent] = useState(1200);
-  const [groceries, setGroceries] = useState(350);
-  const [transport, setTransport] = useState(250);
-  const [subscriptions, setSubscriptions] = useState(40);
-  const [misc, setMisc] = useState(200);
+// Inputs (default = baseline)
+const [monthlyIncome, setMonthlyIncome] = useState(3600);
+const [rent, setRent] = useState(1550);
+const [groceries, setGroceries] = useState(450);
+const [transport, setTransport] = useState(320);
+const [subscriptions, setSubscriptions] = useState(60);
+const [misc, setMisc] = useState(320);
 
-  const [startCash, setStartCash] = useState(5000);
-  const [startInvestments, setStartInvestments] = useState(0);
-  const [startDebt, setStartDebt] = useState(0);
+const [startCash, setStartCash] = useState(6500);
+const [startInvestments, setStartInvestments] = useState(2500);
+const [startDebt, setStartDebt] = useState(8500);
 
-  const [years, setYears] = useState(30);
-  const [annualReturn, setAnnualReturn] = useState(0.06);
-  const [annualIncomeGrowth, setAnnualIncomeGrowth] = useState(0.03);
-  const [annualInflation, setAnnualInflation] = useState(0.02);
-  const [annualDebtInterest, setAnnualDebtInterest] = useState(0.05);
-  const [monthlyDebtPayment, setMonthlyDebtPayment] = useState(0);
-  const [investRate, setInvestRate] = useState(1.0);
+const [years, setYears] = useState(25);
+const [annualReturn, setAnnualReturn] = useState(0.06);
+const [annualIncomeGrowth, setAnnualIncomeGrowth] = useState(0.025);
+const [annualInflation, setAnnualInflation] = useState(0.025);
+const [annualDebtInterest, setAnnualDebtInterest] = useState(0.07);
+const [monthlyDebtPayment, setMonthlyDebtPayment] = useState(320);
+const [investRate, setInvestRate] = useState(0.45);
 
-  const [simulations, setSimulations] = useState(1000);
-  const [returnVolAnnual, setReturnVolAnnual] = useState(0.15);
-  const [seed, setSeed] = useState(42);
+const [simulations, setSimulations] = useState(4000);
+const [returnVolAnnual, setReturnVolAnnual] = useState(0.20);
+const [seed, setSeed] = useState(42);
+
 
   const [showAdvanced, setShowAdvanced] = useState(false);
 
@@ -128,24 +130,27 @@ export default function App() {
     setResult(null);
 
     if (name === "baseline") {
-      setStartCash(3000);
-      setStartInvestments(0);
-      setStartDebt(4000);
-      setMonthlyIncome(2800);
-      setRent(1300);
-      setGroceries(400);
-      setTransport(300);
+      setMonthlyIncome(3600);
+      setRent(1550);
+      setGroceries(450);
+      setTransport(320);
       setSubscriptions(60);
-      setMisc(250);
-      setYears(30);
+      setMisc(320);
+    
+      setStartCash(6500);
+      setStartInvestments(2500);
+      setStartDebt(8500);
+    
+      setYears(25);
       setAnnualReturn(0.06);
       setAnnualIncomeGrowth(0.025);
       setAnnualInflation(0.025);
-      setAnnualDebtInterest(0.06);
-      setMonthlyDebtPayment(150);
-      setInvestRate(0.7);
-      setSimulations(2000);
-      setReturnVolAnnual(0.18);
+      setAnnualDebtInterest(0.07);
+      setMonthlyDebtPayment(320);
+      setInvestRate(0.45);
+    
+      setSimulations(4000);
+      setReturnVolAnnual(0.2);
       setSeed(42);
       return;
     }
@@ -153,24 +158,27 @@ export default function App() {
     
 
     if (name === "high_rent") {
-      setRent(1900);
       applyPreset("baseline");
+      setRent(1900);
       return;
     }
+    
 
     if (name === "car_payment") {
       applyPreset("baseline");
-      setTransport(450);
-      setStartDebt(12000);        // car loan principal
-      setMonthlyDebtPayment(300); // payment
-      setMisc(300);               // extra maintenance/insurance buffer
+      setStartDebt(16000);
+      setMonthlyDebtPayment(450);
+      setTransport(450); 
+      setMisc(380);
       return;
+      
     }
     
     if (name === "income_shock") {
       applyPreset("baseline");
-      setMonthlyIncome(2400);
+      setMonthlyIncome(3000);
       return;
+      
     }
     
   }
@@ -319,7 +327,7 @@ function Landing({ onEnter }) {
                 • Adds randomness to investment returns (Monte Carlo).
               </p>
               <p className="panelLine">
-                • Outputs a risk metric: <b>Probability of Ruin</b>.
+                • Outputs a risk metric: <b>Probability of Insolvency</b>.
               </p>
             </div>
 
@@ -345,7 +353,7 @@ function Landing({ onEnter }) {
             <div className="panelBody mono">
               <div className="specRow">
                 <span className="specKey">Primary metric</span>
-                <span className="specVal">P(ruin)</span>
+                <span className="specVal">P(insolvency)</span>
               </div>
               <div className="specRow">
                 <span className="specKey">Summary stats</span>
@@ -397,7 +405,7 @@ function Simulator(props) {
       <section className="card">
         <h2 className="h2">Scenario Builder</h2>
         <p className="muted">
-          Build a scenario, run Monte Carlo, and view downside outcomes + Probability of Ruin.
+        Build a scenario, run Monte Carlo, and view downside outcomes + Probability of Insolvency.
         </p>
 
         <div className="sectionTitle">Presets</div>
@@ -489,12 +497,12 @@ function Simulator(props) {
         {result ? (
           <div className="resultsGrid">
             <div className="resultCard danger">
-              <div className="resultLabel">Probability of Ruin</div>
+              <div className="resultLabel">Probability of Insolvency</div>
               <div className="resultValue">
                 {(result.probability_of_ruin * 100).toFixed(1)}%
               </div>
               <div className="resultHint">
-              Chance net worth drops below $0 after the simulation starts
+              Chance you can't cover expenses or required debt payments (even after liquidating investments)
               </div>
             </div>
 
@@ -564,16 +572,14 @@ function InfoModal({ onClose }) {
           </div>
 
           <div className="modalSection">
-            <div className="modalH">Probability of Ruin</div>
+            <div className="modalH">Probability of Insolvency</div>
             <div className="muted">
-            <div className="modalH">Probability of Ruin</div>
-            <div className="muted">
-              We run N simulated futures. A path is counted as “ruined” if net worth drops below $0
-              after the simulation begins (we don’t count starting in debt as immediate ruin).
-              Probability of Ruin = ruined_paths / total_paths.
-            </div>
+              We run N simulated futures. A path is counted as insolvent if it cannot cover monthly
+              expenses or make the required debt payment, even after liquidating investments.
+              Probability of Insolvency = insolvent_paths / total_paths.
             </div>
           </div>
+
 
           <div className="modalSection">
             <div className="modalH">Percentiles (p10 / median / p90)</div>
@@ -585,7 +591,7 @@ function InfoModal({ onClose }) {
           <div className="modalSection">
             <div className="modalH">Why this is useful</div>
             <div className="muted">
-              It compares decisions by risk, not just average return. For example: “How much does buying a car increase ruin risk?”
+              It compares decisions by risk, not just average return. For example: “How much does buying a car increase insolvency risk?”
             </div>
           </div>
         </div>
