@@ -9,7 +9,7 @@ from .compare import compare_scenarios
 app = FastAPI(
     title="LifeLedger API",
     version="0.1.0",
-    description="Backend for a life decision financial simulator."
+    description="Backend for a LifeLedger"
 )
 
 app.add_middleware(
@@ -28,9 +28,10 @@ def health():
 @app.get("/schema")
 def schema_example():
     """
-    Returns an example request payload using default values.
-    This is useful for frontend later and for verifying the model is correct.
+    Returns an example SimulationRequest using model default values.
+    Useful for frontend integration, testing, and API inspection.
     """
+
     example = SimulationRequest(
         profile={},
         assumptions={}
@@ -39,6 +40,10 @@ def schema_example():
 
 @app.post("/simulate")
 def simulate(req: SimulationRequest):
+    """
+    Run a financial simulation.
+
+    """
     if req.mode == "deterministic":
         return run_deterministic(req)
 
