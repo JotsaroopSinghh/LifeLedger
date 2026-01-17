@@ -146,7 +146,7 @@ def run_monte_carlo(req: SimulationRequest) -> MonteCarloSummary:
     - Probability of Insolvency = (# insolvent paths) / N
 
     Returns:
-    - probability_of_insolvency (as probability_of_ruin field name for API compatibility)
+    - probability_of_insolvency
     - final net worth percentiles: p10, median, p90
     """
 

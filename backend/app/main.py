@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
-from .models import SimulationRequest, CompareRequest
+from .models import SimulationRequest
 from .simulate import run_deterministic, run_monte_carlo
 
 
