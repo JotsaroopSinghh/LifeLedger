@@ -6,18 +6,20 @@ Core simulation engine for LifeLedger.
 This module implements two modes:
 1) Deterministic simulation:
    - Uses fixed monthly growth rates (no randomness).
-   - Produces full time-series of cash, investments, debt, and net worth.
+   - Produces a time-series of cash, investments, debt, and net worth.
 
 2) Monte Carlo simulation:
    - Runs many independent simulations (N paths).
    - Adds randomness to investment returns each month.
-   - Reports distribution summaries and the key risk metric: Probability of Ruin.
+   - Reports distribution summaries and the key risk metric: Probability of Insolvency.
 
 Key definitions:
 - Net worth = cash + investments - debt
-- Ruin occurs if net worth drops below 0 at any month AFTER the simulation starts (month > 0).
-  This avoids counting "starting in debt" as immediate ruin.
+- Insolvency event occurs if you fail either:
+  (1) to cover monthly expenses even after liquidating investments, OR
+  (2) to make the required monthly debt payment in full even after liquidating investments.
 """
+
 
 import numpy as np
 from .models import SimulationRequest, SimulationResult, MonteCarloSummary
@@ -60,27 +62,39 @@ def run_deterministic(req: SimulationRequest) -> SimulationResult:
     nw_series = []
 
     for m in range(1, months_total + 1):
-        # 1) Income arrives
         cash += income
-
-        # 2) Expenses leave
         total_expenses = rent + groceries + transport + subs + misc
         cash -= total_expenses
 
-        # 3) Debt grows (interest)
+        if cash < 0:
+            needed = -cash
+            sell = min(inv, needed)
+            inv -= sell
+            cash += sell
+
+            # Still negative after liquidating all investments -> insolvency
+            if cash < 0:
+                break
         if debt > 0:
             debt *= (1.0 + r_debt_m)
 
-        # 4) Debt payment
-        payment = min(cash, a.monthly_debt_payment, debt) if debt > 0 else 0.0
-        cash -= payment
-        debt -= payment
+        required_payment = min(a.monthly_debt_payment, debt) if debt > 0 else 0.0
 
-        # 5) If cash goes negative, we assume the deficit is financed by borrowing.
-        # This keeps cash from staying negative and makes affordability problems show up as rising debt.
-        if cash < 0:
-            debt += (-cash)
-            cash = 0.0
+        if required_payment > 0:
+            if cash < required_payment:
+                # Try liquidating investments to cover the payment shortfall
+                needed = required_payment - cash
+                sell = min(inv, needed)
+                inv -= sell
+                cash += sell
+
+            # Still can't pay in full -> insolvency event
+            if cash < required_payment:
+                break
+
+            cash -= required_payment
+            debt -= required_payment
+
 
         # 6) Invest savings
         if cash > 0:
@@ -122,18 +136,20 @@ def run_monte_carlo(req: SimulationRequest) -> MonteCarloSummary:
     We run N independent simulation paths. Each month, investment returns are sampled:
         r_month ~ Normal(mu_month, sigma_month)
 
-    - mu_month is derived from annual expected return (compound conversion).
+    - mu_month is derived from annual expected return via compound conversion.
     - sigma_month is derived from annual volatility using sqrt(time):
         sigma_month ≈ sigma_annual / sqrt(12)
 
-    Risk metric:
-    - A path is considered "ruined" if net worth < 0 at any month.
-    - Probability of Ruin = (# ruined paths) / N
+    Insolvency metric:
+    - A path is counted as insolvent if it cannot cover expenses or make the required debt payment
+      even after liquidating investments.
+    - Probability of Insolvency = (# insolvent paths) / N
 
     Returns:
-    - Probability of Ruin
-    - Percentiles of final net worth (p10, median, p90)
+    - probability_of_insolvency (as probability_of_ruin field name for API compatibility)
+    - final net worth percentiles: p10, median, p90
     """
+
     if req.monte_carlo is None:
         raise ValueError("monte_carlo params required when mode='monte_carlo'")
 
@@ -156,7 +172,7 @@ def run_monte_carlo(req: SimulationRequest) -> MonteCarloSummary:
 
     rng = np.random.default_rng(mc.seed)
 
-    ruin_count = 0
+    insolvency_count = 0
     finals = []
 
     for _ in range(mc.simulations):
@@ -171,22 +187,46 @@ def run_monte_carlo(req: SimulationRequest) -> MonteCarloSummary:
         subs = float(p.subscriptions)
         misc = float(p.misc)
 
-        ruined = False
+        insolvent = False
 
         for _m in range(months_total):
             cash += income
             cash -= (rent + groceries + transport + subs + misc)
 
+            # Option 1: If expenses push cash below 0, sell investments to cover
+            if cash < 0:
+                needed = -cash
+                sell = min(inv, needed)
+                inv -= sell
+                cash += sell
+
+# Still can't cover expenses after liquidation -> insolvency event
+                if cash < 0:
+                    insolvent = True
+                    break
+
+            # Debt grows (interest)
             if debt > 0:
                 debt *= (1.0 + r_debt_m)
 
-            pay = min(cash, a.monthly_debt_payment, debt) if debt > 0 else 0.0
-            cash -= pay
-            debt -= pay
+            # Required debt payment (must be paid in full)
+            required_payment = min(a.monthly_debt_payment, debt) if debt > 0 else 0.0
 
-            if cash < 0:
-                debt += (-cash)
-                cash = 0.0
+            if required_payment > 0:
+                if cash < required_payment:
+                    needed = required_payment - cash
+                    sell = min(inv, needed)
+                    inv -= sell
+                    cash += sell
+
+# Still can't make required payment after liquidation -> insolvency event
+                if cash < required_payment:
+                    insolvent = True
+                    break
+
+                cash -= required_payment
+                debt -= required_payment
+
 
             if cash > 0:
                 invest_amt = cash * a.invest_rate
@@ -205,25 +245,18 @@ def run_monte_carlo(req: SimulationRequest) -> MonteCarloSummary:
             subs *= (1.0 + r_infl_m)
             misc *= (1.0 + r_infl_m)
 
-            nw = cash + inv - debt
+        if insolvent:
+            insolvency_count += 1
 
-            # "Ruin" is defined as net worth crossing below 0 AFTER the simulation begins.
-            # This avoids counting starting debt as immediate ruin and makes the metric reflect
-            # the risk that a decision/path causes insolvency later.
-            if _m > 0 and nw < 0:
-                ruined = True
+        final_nw = cash + inv - debt
+        finals.append(final_nw)
 
-
-        if ruined:
-            ruin_count += 1
-
-        finals.append(cash + inv - debt)
 
     finals = np.array(finals, dtype=float)
-    p_ruin = ruin_count / mc.simulations
+    p_insolvency = insolvency_count / mc.simulations
 
     return MonteCarloSummary(
-        probability_of_ruin=round(p_ruin, 4),
+        probability_of_ruin=round(p_insolvency, 4),
         final_net_worth_p10=round(float(np.percentile(finals, 10)), 2),
         final_net_worth_median=round(float(np.percentile(finals, 50)), 2),
         final_net_worth_p90=round(float(np.percentile(finals, 90)), 2),
