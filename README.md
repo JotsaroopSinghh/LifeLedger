@@ -60,14 +60,22 @@ This allows users to reason about **downside risk**, not just expected outcomes.
 
 ---
 
-## Local Developement 
-# Frontend
-cd frontend
+## Local Development
+
+### Run the project locally
+
+```bash
+# Backend (FastAPI)
+cd backend
+python -m venv .venv
+source .venv/bin/activate   # macOS/Linux
+# .venv\Scripts\activate    # Windows
+pip install -r requirements.txt
+uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+
+# Frontend (React)
+cd ../frontend
 npm install
 npm run dev
 
-# Backend
-cd backend
-pip install -r requirements.txt
-python -m app.main
 
