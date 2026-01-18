@@ -22,11 +22,23 @@ class LifeProfile(BaseModel):
 class EconomicAssumptions(BaseModel):
     """Macroeconomic assumptions used to evolve income, expenses, and debt over time."""
     years: int = Field(25, ge=1, le=60)
-    annual_income_growth: float = Field(0.025, ge=-0.2, le=0.5, description="Income growth rate per year")
-    annual_inflation: float = Field(0.025, ge=-0.1, le=0.3, description="Expense inflation rate per year")
+
+    annual_return: float = Field(
+        0.06, ge=-0.5, le=0.5, description="Expected annual investment return"
+    )
+
+    annual_income_growth: float = Field(
+        0.025, ge=-0.2, le=0.5, description="Income growth rate per year"
+    )
+    annual_inflation: float = Field(
+        0.025, ge=-0.1, le=0.3, description="Expense inflation rate per year"
+    )
+
     annual_debt_interest: float = Field(0.06, ge=0.0, le=1.0)
     monthly_debt_payment: float = Field(200, ge=0)
-    invest_rate: float = Field(0.55, ge=0.0, le=1.0, description="Fraction of remaining cash invested each month")
+    invest_rate: float = Field(
+        0.55, ge=0.0, le=1.0, description="Fraction of remaining cash invested each month"
+    )
 
 class MonteCarloParams(BaseModel):
     simulations: int = Field(3000, ge=100, le=20000)
