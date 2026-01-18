@@ -5,20 +5,19 @@ export default function App() {
   const [view, setView] = useState("landing");
   const [showInfo, setShowInfo] = useState(false);
 
-  //Inputs
 // Inputs (default = baseline)
-const [monthlyIncome, setMonthlyIncome] = useState(3600);
+const [monthlyIncome, setMonthlyIncome] = useState(2550);
 const [rent, setRent] = useState(1550);
 const [groceries, setGroceries] = useState(450);
 const [transport, setTransport] = useState(320);
 const [subscriptions, setSubscriptions] = useState(60);
 const [misc, setMisc] = useState(320);
 
-const [startCash, setStartCash] = useState(6500);
-const [startInvestments, setStartInvestments] = useState(2500);
-const [startDebt, setStartDebt] = useState(8500);
+const [startCash, setStartCash] = useState(0);
+const [startInvestments, setStartInvestments] = useState(10000);
+const [startDebt, setStartDebt] = useState(0);
 
-const [years, setYears] = useState(25);
+const [years, setYears] = useState(5);
 const [annualReturn, setAnnualReturn] = useState(0.06);
 const [annualIncomeGrowth, setAnnualIncomeGrowth] = useState(0.025);
 const [annualInflation, setAnnualInflation] = useState(0.025);
@@ -29,6 +28,7 @@ const [investRate, setInvestRate] = useState(0.45);
 const [simulations, setSimulations] = useState(4000);
 const [returnVolAnnual, setReturnVolAnnual] = useState(0.20);
 const [seed, setSeed] = useState(42);
+
 
 
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -130,18 +130,18 @@ const [seed, setSeed] = useState(42);
     setResult(null);
 
     if (name === "baseline") {
-      setMonthlyIncome(3600);
+      setMonthlyIncome(2550);
       setRent(1550);
       setGroceries(450);
       setTransport(320);
       setSubscriptions(60);
       setMisc(320);
     
-      setStartCash(6500);
-      setStartInvestments(2500);
-      setStartDebt(8500);
+      setStartCash(0);
+      setStartInvestments(10000);
+      setStartDebt(0);
     
-      setYears(25);
+      setYears(5);
       setAnnualReturn(0.06);
       setAnnualIncomeGrowth(0.025);
       setAnnualInflation(0.025);
@@ -150,18 +150,11 @@ const [seed, setSeed] = useState(42);
       setInvestRate(0.45);
     
       setSimulations(4000);
-      setReturnVolAnnual(0.2);
+      setReturnVolAnnual(0.20);
       setSeed(42);
       return;
     }
     
-    
-
-    if (name === "high_rent") {
-      applyPreset("baseline");
-      setRent(1900);
-      return;
-    }
     
 
     if (name === "car_payment") {
