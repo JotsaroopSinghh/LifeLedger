@@ -6,8 +6,8 @@ export default function App() {
   const [showInfo, setShowInfo] = useState(false);
 
 // Inputs (default = baseline)
-const [monthlyIncome, setMonthlyIncome] = useState(2550);
-const [rent, setRent] = useState(1550);
+const [monthlyIncome, setMonthlyIncome] = useState(2500);
+const [rent, setRent] = useState(1450);
 const [groceries, setGroceries] = useState(450);
 const [transport, setTransport] = useState(320);
 const [subscriptions, setSubscriptions] = useState(60);
@@ -130,8 +130,8 @@ const [seed, setSeed] = useState(42);
     setResult(null);
 
     if (name === "baseline") {
-      setMonthlyIncome(2550);
-      setRent(1550);
+      setMonthlyIncome(2500);
+      setRent(1450);
       setGroceries(450);
       setTransport(320);
       setSubscriptions(60);
@@ -159,9 +159,9 @@ const [seed, setSeed] = useState(42);
 
     if (name === "car_payment") {
       applyPreset("baseline");
-      setStartDebt(16000);
+      setStartDebt(2000);
       setMonthlyDebtPayment(450);
-      setTransport(450); 
+      setTransport(250); 
       setMisc(380);
       return;
       
@@ -169,7 +169,13 @@ const [seed, setSeed] = useState(42);
     
     if (name === "income_shock") {
       applyPreset("baseline");
-      setMonthlyIncome(3000);
+      setMonthlyIncome(2400);
+      return;
+      
+    }
+    if (name === "high_rent") {
+      applyPreset("baseline");
+      setRent(1650);
       return;
       
     }
