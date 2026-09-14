@@ -5,35 +5,34 @@ export default function App() {
   const [view, setView] = useState("landing");
   const [showInfo, setShowInfo] = useState(false);
 
-// Inputs (default = baseline)
-const [monthlyIncome, setMonthlyIncome] = useState(2500);
-const [rent, setRent] = useState(1450);
-const [groceries, setGroceries] = useState(450);
-const [transport, setTransport] = useState(320);
-const [subscriptions, setSubscriptions] = useState(60);
-const [misc, setMisc] = useState(320);
+  // Inputs (default = baseline)
+  const [monthlyIncome, setMonthlyIncome] = useState(2500);
+  const [rent, setRent] = useState(1450);
+  const [groceries, setGroceries] = useState(450);
+  const [transport, setTransport] = useState(320);
+  const [subscriptions, setSubscriptions] = useState(60);
+  const [misc, setMisc] = useState(320);
 
-const [startCash, setStartCash] = useState(0);
-const [startInvestments, setStartInvestments] = useState(10000);
-const [startDebt, setStartDebt] = useState(0);
+  const [startCash, setStartCash] = useState(0);
+  const [startInvestments, setStartInvestments] = useState(10000);
+  const [startDebt, setStartDebt] = useState(0);
 
-const [years, setYears] = useState(5);
-const [annualReturn, setAnnualReturn] = useState(0.06);
-const [annualIncomeGrowth, setAnnualIncomeGrowth] = useState(0.025);
-const [annualInflation, setAnnualInflation] = useState(0.025);
-const [annualDebtInterest, setAnnualDebtInterest] = useState(0.07);
-const [monthlyDebtPayment, setMonthlyDebtPayment] = useState(320);
-const [investRate, setInvestRate] = useState(0.45);
+  const [years, setYears] = useState(5);
+  const [annualReturn, setAnnualReturn] = useState(0.06);
+  const [annualIncomeGrowth, setAnnualIncomeGrowth] = useState(0.025);
+  const [annualInflation, setAnnualInflation] = useState(0.025);
+  const [annualDebtInterest, setAnnualDebtInterest] = useState(0.07);
+  const [monthlyDebtPayment, setMonthlyDebtPayment] = useState(320);
+  const [investRate, setInvestRate] = useState(0.45);
 
-const [simulations, setSimulations] = useState(4000);
-const [returnVolAnnual, setReturnVolAnnual] = useState(0.20);
-const [seed, setSeed] = useState(42);
-
-
+  const [simulations, setSimulations] = useState(4000);
+  const [returnVolAnnual, setReturnVolAnnual] = useState(0.20);
+  const [seed, setSeed] = useState(42);
 
   const [showAdvanced, setShowAdvanced] = useState(false);
 
   const [result, setResult] = useState(null);
+  const [baselineResult, setBaselineResult] = useState(null);
   const [error, setError] = useState("");
   const [isRunning, setIsRunning] = useState(false);
 
@@ -88,38 +87,66 @@ const [seed, setSeed] = useState(42);
     seed,
   ]);
 
+  const baselineRequest = useMemo(() => {
+    return {
+      profile: {
+        age: 22,
+        start_cash: 0,
+        start_investments: 10000,
+        start_debt: 0,
+        monthly_income: 2500,
+        rent: 1450,
+        groceries: 450,
+        transport: 320,
+        subscriptions: 60,
+        misc: 320,
+      },
+      assumptions: {
+        ...requestBody.assumptions,
+        monthly_debt_payment: 320,
+      },
+      monte_carlo: requestBody.monte_carlo,
+    };
+  }, [requestBody]);
+
+  async function fetchSimulation(body) {
+    const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000";
+    const res = await fetch(`${API_BASE}/simulate`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(
+        typeof data?.detail === "string"
+          ? data.detail
+          : JSON.stringify(data, null, 2)
+      );
+    }
+
+    return data;
+  }
+
   async function runSimulation() {
     setIsRunning(true);
     setError("");
     setResult(null);
+    setBaselineResult(null);
 
     try {
-        const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000";
+      const [scenarioData, baselineData] = await Promise.all([
+        fetchSimulation(requestBody),
+        fetchSimulation(baselineRequest),
+      ]);
 
-        const res = await fetch(`${API_BASE}/simulate`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(requestBody),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        const msg =
-          typeof data?.detail === "string"
-            ? data.detail
-            : JSON.stringify(data, null, 2);
-        setError(msg);
-        setIsRunning(false);
-        return;
-      }
-
-      setResult(data);
-      setIsRunning(false);
+      setResult(scenarioData);
+      setBaselineResult(baselineData);
     } catch (e) {
-      setError(
-        "Could not reach backend. Is FastAPI running on http://127.0.0.1:8000 ?"
-      );
+      setError(e.message || "Could not reach backend.");
+    } finally {
       setIsRunning(false);
     }
   }
@@ -127,6 +154,7 @@ const [seed, setSeed] = useState(42);
   function applyPreset(name) {
     setError("");
     setResult(null);
+    setBaselineResult(null);
 
     if (name === "baseline") {
       setMonthlyIncome(2500);
@@ -135,11 +163,11 @@ const [seed, setSeed] = useState(42);
       setTransport(320);
       setSubscriptions(60);
       setMisc(320);
-    
+
       setStartCash(0);
       setStartInvestments(10000);
       setStartDebt(0);
-    
+
       setYears(5);
       setAnnualReturn(0.06);
       setAnnualIncomeGrowth(0.025);
@@ -147,38 +175,32 @@ const [seed, setSeed] = useState(42);
       setAnnualDebtInterest(0.07);
       setMonthlyDebtPayment(320);
       setInvestRate(0.45);
-    
+
       setSimulations(4000);
       setReturnVolAnnual(0.20);
       setSeed(42);
       return;
     }
-    
-    
 
     if (name === "car_payment") {
       applyPreset("baseline");
       setStartDebt(2000);
       setMonthlyDebtPayment(450);
-      setTransport(250); 
+      setTransport(250);
       setMisc(380);
       return;
-      
     }
-    
+
     if (name === "income_shock") {
       applyPreset("baseline");
       setMonthlyIncome(2400);
       return;
-      
     }
+
     if (name === "high_rent") {
       applyPreset("baseline");
       setRent(1650);
-      return;
-      
     }
-    
   }
 
   function formatMoney(x) {
@@ -186,19 +208,30 @@ const [seed, setSeed] = useState(42);
     return Number(x).toLocaleString(undefined, { maximumFractionDigits: 0 });
   }
 
+  function formatMoneyDelta(current, baseline) {
+    if (current === null || baseline === null) return "—";
+    const delta = current - baseline;
+    const sign = delta > 0 ? "+" : "";
+    return `${sign}$${formatMoney(delta)}`;
+  }
+
+  function formatProbabilityDelta(current, baseline) {
+    const delta = (current - baseline) * 100;
+    const sign = delta > 0 ? "+" : "";
+    return `${sign}${delta.toFixed(1)} pp`;
+  }
+
   return (
     <div className="page">
       <TopNav
-  onGoLanding={() => setView("landing")}
-  onOpenInfo={() => setShowInfo(true)}
-  showBack={view === "simulator"}
-  onGoBack={() => setView("landing")}
-/>
-
+        onGoLanding={() => setView("landing")}
+        onOpenInfo={() => setShowInfo(true)}
+        showBack={view === "simulator"}
+        onGoBack={() => setView("landing")}
+      />
 
       {view === "landing" ? (
-      <Landing onEnter={() => setView("simulator")} />
-
+        <Landing onEnter={() => setView("simulator")} />
       ) : (
         <Simulator
           showAdvanced={showAdvanced}
@@ -209,8 +242,10 @@ const [seed, setSeed] = useState(42);
           isRunning={isRunning}
           error={error}
           result={result}
+          baselineResult={baselineResult}
           formatMoney={formatMoney}
-          // fields
+          formatMoneyDelta={formatMoneyDelta}
+          formatProbabilityDelta={formatProbabilityDelta}
           startCash={startCash}
           setStartCash={setStartCash}
           startInvestments={startInvestments}
@@ -252,19 +287,18 @@ const [seed, setSeed] = useState(42);
         />
       )}
 
-        <footer className="footer">
-          <span>By Jotsaroop Singh</span>
-          <span className="footerSep">•</span>
-          <a
-            href="https://github.com/JotsaroopSinghh/LifeLedger.git"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="footerLink"
-          >
-            View source on GitHub
-          </a>
-        </footer>
-
+      <footer className="footer">
+        <span>By Jotsaroop Singh</span>
+        <span className="footerSep">•</span>
+        <a
+          href="https://github.com/JotsaroopSinghh/LifeLedger.git"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="footerLink"
+        >
+          View source on GitHub
+        </a>
+      </footer>
 
       {showInfo ? <InfoModal onClose={() => setShowInfo(false)} /> : null}
     </div>
@@ -301,7 +335,6 @@ function TopNav({ onGoLanding, onOpenInfo, showBack, onGoBack }) {
     </header>
   );
 }
-
 
 function Landing({ onEnter }) {
   return (
@@ -383,8 +416,6 @@ function Landing({ onEnter }) {
   );
 }
 
-
-
 function Simulator(props) {
   const {
     showAdvanced,
@@ -395,7 +426,10 @@ function Simulator(props) {
     isRunning,
     error,
     result,
+    baselineResult,
     formatMoney,
+    formatMoneyDelta,
+    formatProbabilityDelta,
   } = props;
 
   return (
@@ -403,7 +437,7 @@ function Simulator(props) {
       <section className="card">
         <h2 className="h2">Scenario Builder</h2>
         <p className="muted">
-        Build a scenario, run Monte Carlo, and view downside outcomes + Probability of Insolvency.
+          Build a scenario, run Monte Carlo, and view downside outcomes + Probability of Insolvency.
         </p>
 
         <div className="sectionTitle">Presets</div>
@@ -500,7 +534,7 @@ function Simulator(props) {
                 {(result.probability_of_insolvency * 100).toFixed(1)}%
               </div>
               <div className="resultHint">
-              Chance you can't cover expenses or required debt payments (even after liquidating investments)
+                Chance you can't cover expenses or required debt payments (even after liquidating investments)
               </div>
             </div>
 
@@ -518,6 +552,44 @@ function Simulator(props) {
               <div className="resultLabel">Upside (90th percentile)</div>
               <div className="resultValue">${formatMoney(result.final_net_worth_p90)}</div>
             </div>
+
+            {baselineResult ? (
+              <div className="cardSub">
+                <div className="cardSubTitle">Baseline vs Current Scenario</div>
+                <div className="specRow">
+                  <span className="specKey">Insolvency</span>
+                  <span className="specVal">
+                    {(baselineResult.probability_of_insolvency * 100).toFixed(1)}% →{" "}
+                    {(result.probability_of_insolvency * 100).toFixed(1)}%{" "}
+                    ({formatProbabilityDelta(
+                      result.probability_of_insolvency,
+                      baselineResult.probability_of_insolvency
+                    )})
+                  </span>
+                </div>
+                <div className="specRow">
+                  <span className="specKey">P10</span>
+                  <span className="specVal">
+                    ${formatMoney(baselineResult.final_net_worth_p10)} → ${formatMoney(result.final_net_worth_p10)}{" "}
+                    ({formatMoneyDelta(result.final_net_worth_p10, baselineResult.final_net_worth_p10)})
+                  </span>
+                </div>
+                <div className="specRow">
+                  <span className="specKey">Median</span>
+                  <span className="specVal">
+                    ${formatMoney(baselineResult.final_net_worth_median)} → ${formatMoney(result.final_net_worth_median)}{" "}
+                    ({formatMoneyDelta(result.final_net_worth_median, baselineResult.final_net_worth_median)})
+                  </span>
+                </div>
+                <div className="specRow">
+                  <span className="specKey">P90</span>
+                  <span className="specVal">
+                    ${formatMoney(baselineResult.final_net_worth_p90)} → ${formatMoney(result.final_net_worth_p90)}{" "}
+                    ({formatMoneyDelta(result.final_net_worth_p90, baselineResult.final_net_worth_p90)})
+                  </span>
+                </div>
+              </div>
+            ) : null}
 
             <div className="cardSub">
               <div className="cardSubTitle">Request Preview</div>
@@ -577,7 +649,6 @@ function InfoModal({ onClose }) {
               Probability of Insolvency = insolvent_paths / total_paths.
             </div>
           </div>
-
 
           <div className="modalSection">
             <div className="modalH">Percentiles (p10 / median / p90)</div>

@@ -28,12 +28,16 @@ def run_monte_carlo(req: SimulationRequest) -> MonteCarloSummary:
     r_infl_m = annual_to_monthly_rate(a.annual_inflation)
     r_debt_m = annual_to_monthly_rate(a.annual_debt_interest)
 
-    rng = np.random.default_rng(mc.seed)
-
     insolvency_months = []
     finals = []
 
-    for _ in range(mc.simulations):
+    for path_index in range(mc.simulations):
+        rng = (
+            np.random.default_rng()
+            if mc.seed is None
+            else np.random.default_rng([mc.seed, path_index])
+        )
+
         cash = float(p.start_cash)
         inv = float(p.start_investments)
         debt = float(p.start_debt)
@@ -88,7 +92,6 @@ def run_monte_carlo(req: SimulationRequest) -> MonteCarloSummary:
                 cash -= invest_amt
                 inv += invest_amt
 
-            # A monthly loss cannot exceed the full investment balance.
             monthly_return = max(float(rng.normal(mu_m, sigma_m)), -1.0)
             if inv > 0:
                 inv *= 1.0 + monthly_return
