@@ -1,17 +1,43 @@
-.resultsPanel{overflow:hidden}
+.simulatorStack{
+  grid-template-columns:1fr;
+  align-items:start;
+}
+
+.scenarioCard,
+.resultsPanel{
+  width:100%;
+}
+
+.presetBtn.active{
+  border-color:rgba(124,92,255,0.72);
+  background:rgba(124,92,255,0.22);
+  box-shadow:0 0 0 2px rgba(124,92,255,0.10);
+}
+
+.customPreset{
+  display:inline-flex;
+  align-items:center;
+  padding:8px 12px;
+  border-radius:999px;
+  border:1px dashed rgba(255,255,255,0.20);
+  color:var(--muted);
+  font-size:12px;
+  font-weight:800;
+}
+
+.resultsPanel{
+  overflow:hidden;
+  scroll-margin-top:100px;
+}
+
+.resultsGrid{
+  grid-template-columns:repeat(2, minmax(0, 1fr));
+}
 
 .riskCard{grid-column:1 / -1}
-.riskCard.low{
-  border-color:rgba(34,197,94,0.35);
-  background:linear-gradient(145deg, rgba(34,197,94,0.12), rgba(255,255,255,0.04));
-}
-.riskCard.elevated{
-  border-color:rgba(245,158,11,0.38);
-  background:linear-gradient(145deg, rgba(245,158,11,0.13), rgba(255,255,255,0.04));
-}
-.riskCard.high{
-  border-color:rgba(239,68,68,0.42);
-  background:linear-gradient(145deg, rgba(239,68,68,0.15), rgba(255,255,255,0.04));
+.riskCard{
+  border-color:rgba(124,92,255,0.38);
+  background:linear-gradient(145deg, rgba(124,92,255,0.13), rgba(255,255,255,0.04));
 }
 
 .riskTopLine{
@@ -28,21 +54,9 @@
   font-size:10px;
   font-weight:900;
   letter-spacing:0.35px;
-}
-.riskBadge.low{
-  color:#86efac;
-  background:rgba(34,197,94,0.13);
-  border:1px solid rgba(34,197,94,0.25);
-}
-.riskBadge.elevated{
-  color:#fcd34d;
-  background:rgba(245,158,11,0.13);
-  border:1px solid rgba(245,158,11,0.25);
-}
-.riskBadge.high{
-  color:#fca5a5;
-  background:rgba(239,68,68,0.13);
-  border:1px solid rgba(239,68,68,0.25);
+  color:#c4b5fd;
+  background:rgba(124,92,255,0.12);
+  border:1px solid rgba(124,92,255,0.24);
 }
 
 .wealthCards{
@@ -54,7 +68,6 @@
 .wealthCards .resultValue{font-size:22px}
 
 .chartCard{
-  grid-column:1 / -1;
   border:1px solid rgba(255,255,255,0.11);
   background:rgba(0,0,0,0.15);
   border-radius:16px;
@@ -208,10 +221,16 @@
   line-height:1.45;
 }
 
+@media (max-width: 820px){
+  .resultsGrid{grid-template-columns:1fr}
+  .chartCard{grid-column:1 / -1}
+}
+
 @media (max-width: 760px){
   .wealthCards{grid-template-columns:1fr}
   .pathSummary{grid-template-columns:1fr}
   .chartHeader{flex-direction:column}
   .wealthRangeTop{flex-direction:column;gap:3px}
   .wealthRangeTop span:last-child{text-align:left}
+  .riskTopLine{flex-direction:column}
 }

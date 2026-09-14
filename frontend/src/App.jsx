@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import "./styles.css";
 
 const EXAMPLE_RESULTS = [
@@ -36,6 +36,7 @@ export default function App() {
   const [seed, setSeed] = useState(42);
 
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [selectedPreset, setSelectedPreset] = useState("baseline");
   const [result, setResult] = useState(null);
   const [baselineResult, setBaselineResult] = useState(null);
   const [error, setError] = useState("");
@@ -170,10 +171,19 @@ export default function App() {
     }
   }
 
-  function applyPreset(name) {
+  function clearResults() {
     setError("");
     setResult(null);
     setBaselineResult(null);
+  }
+
+  function markCustom() {
+    setSelectedPreset("custom");
+    clearResults();
+  }
+
+  function applyPreset(name) {
+    clearResults();
 
     if (name === "baseline") {
       setMonthlyIncome(2500);
@@ -198,6 +208,7 @@ export default function App() {
       setSimulations(4000);
       setReturnVolAnnual(0.20);
       setSeed(42);
+      setSelectedPreset("baseline");
       return;
     }
 
@@ -207,18 +218,21 @@ export default function App() {
       setMonthlyDebtPayment(450);
       setTransport(250);
       setMisc(380);
+      setSelectedPreset("car_payment");
       return;
     }
 
     if (name === "income_shock") {
       applyPreset("baseline");
       setMonthlyIncome(2400);
+      setSelectedPreset("income_shock");
       return;
     }
 
     if (name === "high_rent") {
       applyPreset("baseline");
       setRent(1650);
+      setSelectedPreset("high_rent");
     }
   }
 
@@ -265,6 +279,8 @@ export default function App() {
           showAdvanced={showAdvanced}
           setShowAdvanced={setShowAdvanced}
           applyPreset={applyPreset}
+          markCustom={markCustom}
+          selectedPreset={selectedPreset}
           requestBody={requestBody}
           runSimulation={runSimulation}
           isRunning={isRunning}
@@ -487,6 +503,8 @@ function Simulator(props) {
     showAdvanced,
     setShowAdvanced,
     applyPreset,
+    markCustom,
+    selectedPreset,
     requestBody,
     runSimulation,
     isRunning,
@@ -498,39 +516,58 @@ function Simulator(props) {
     formatProbabilityDelta,
   } = props;
 
-  const riskTone = result ? getRiskTone(result.probability_of_insolvency) : "low";
+  const resultsRef = useRef(null);
+
+  useEffect(() => {
+    if (!result) return;
+
+    const timer = window.setTimeout(() => {
+      resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 80);
+
+    return () => window.clearTimeout(timer);
+  }, [result]);
+
+  const updateField = (setter) => (value) => {
+    setter(value);
+    markCustom();
+  };
+
+  const presetClass = (name) =>
+    `btnGhost presetBtn ${selectedPreset === name ? "active" : ""}`;
 
   return (
-    <main className="grid">
-      <section className="card">
+    <main className="grid simulatorStack">
+      <section className="card scenarioCard">
         <h2 className="h2">Scenario Builder</h2>
         <p className="muted">
-          Build a scenario, run Monte Carlo, and view downside outcomes + Probability of Insolvency.
+          Build a scenario, run Monte Carlo, and compare the outcome against the baseline.
         </p>
 
         <div className="sectionTitle">Presets</div>
         <div className="presetRow">
-          <button className="btnGhost" type="button" onClick={() => applyPreset("baseline")}>Baseline</button>
-          <button className="btnGhost" type="button" onClick={() => applyPreset("high_rent")}>High Rent City</button>
-          <button className="btnGhost" type="button" onClick={() => applyPreset("car_payment")}>Buy a Car</button>
-          <button className="btnGhost" type="button" onClick={() => applyPreset("income_shock")}>Income Shock</button>
+          <button className={presetClass("baseline")} type="button" onClick={() => applyPreset("baseline")}>Baseline</button>
+          <button className={presetClass("high_rent")} type="button" onClick={() => applyPreset("high_rent")}>High Rent City</button>
+          <button className={presetClass("car_payment")} type="button" onClick={() => applyPreset("car_payment")}>Buy a Car</button>
+          <button className={presetClass("income_shock")} type="button" onClick={() => applyPreset("income_shock")}>Income Shock</button>
+          {selectedPreset === "custom" ? <span className="customPreset">Custom scenario</span> : null}
         </div>
 
         <div className="sectionTitle">Starting State</div>
         <div className="row3">
-          <Field label="Start Cash ($)" value={props.startCash} onChange={props.setStartCash} />
-          <Field label="Start Investments ($)" value={props.startInvestments} onChange={props.setStartInvestments} />
-          <Field label="Start Debt ($)" value={props.startDebt} onChange={props.setStartDebt} />
+          <Field label="Start Cash ($)" value={props.startCash} onChange={updateField(props.setStartCash)} />
+          <Field label="Start Investments ($)" value={props.startInvestments} onChange={updateField(props.setStartInvestments)} />
+          <Field label="Start Debt ($)" value={props.startDebt} onChange={updateField(props.setStartDebt)} />
         </div>
 
         <div className="sectionTitle">Monthly Cashflow</div>
         <div className="row3">
-          <Field label="Income ($/mo)" value={props.monthlyIncome} onChange={props.setMonthlyIncome} />
-          <Field label="Rent ($/mo)" value={props.rent} onChange={props.setRent} />
-          <Field label="Groceries ($/mo)" value={props.groceries} onChange={props.setGroceries} />
-          <Field label="Transport ($/mo)" value={props.transport} onChange={props.setTransport} />
-          <Field label="Subscriptions ($/mo)" value={props.subscriptions} onChange={props.setSubscriptions} />
-          <Field label="Misc ($/mo)" value={props.misc} onChange={props.setMisc} />
+          <Field label="Income ($/mo)" value={props.monthlyIncome} onChange={updateField(props.setMonthlyIncome)} />
+          <Field label="Rent ($/mo)" value={props.rent} onChange={updateField(props.setRent)} />
+          <Field label="Groceries ($/mo)" value={props.groceries} onChange={updateField(props.setGroceries)} />
+          <Field label="Transport ($/mo)" value={props.transport} onChange={updateField(props.setTransport)} />
+          <Field label="Subscriptions ($/mo)" value={props.subscriptions} onChange={updateField(props.setSubscriptions)} />
+          <Field label="Misc ($/mo)" value={props.misc} onChange={updateField(props.setMisc)} />
         </div>
 
         <div className="advHeader">
@@ -544,20 +581,20 @@ function Simulator(props) {
           <>
             <div className="sectionTitle">Assumptions</div>
             <div className="row3">
-              <Field label="Horizon (years)" value={props.years} onChange={props.setYears} step="1" />
-              <Field label="Annual Return (μ)" value={props.annualReturn} onChange={props.setAnnualReturn} step="0.01" />
-              <Field label="Income Growth" value={props.annualIncomeGrowth} onChange={props.setAnnualIncomeGrowth} step="0.01" />
-              <Field label="Inflation" value={props.annualInflation} onChange={props.setAnnualInflation} step="0.01" />
-              <Field label="Debt Interest" value={props.annualDebtInterest} onChange={props.setAnnualDebtInterest} step="0.01" />
-              <Field label="Debt Payment ($/mo)" value={props.monthlyDebtPayment} onChange={props.setMonthlyDebtPayment} step="10" />
-              <Field label="Invest Rate (0–1)" value={props.investRate} onChange={props.setInvestRate} step="0.05" />
+              <Field label="Horizon (years)" value={props.years} onChange={updateField(props.setYears)} step="1" />
+              <Field label="Annual Return (μ)" value={props.annualReturn} onChange={updateField(props.setAnnualReturn)} step="0.01" />
+              <Field label="Income Growth" value={props.annualIncomeGrowth} onChange={updateField(props.setAnnualIncomeGrowth)} step="0.01" />
+              <Field label="Inflation" value={props.annualInflation} onChange={updateField(props.setAnnualInflation)} step="0.01" />
+              <Field label="Debt Interest" value={props.annualDebtInterest} onChange={updateField(props.setAnnualDebtInterest)} step="0.01" />
+              <Field label="Debt Payment ($/mo)" value={props.monthlyDebtPayment} onChange={updateField(props.setMonthlyDebtPayment)} step="10" />
+              <Field label="Invest Rate (0–1)" value={props.investRate} onChange={updateField(props.setInvestRate)} step="0.05" />
             </div>
 
             <div className="sectionTitle">Monte Carlo</div>
             <div className="row3">
-              <Field label="Simulations (N)" value={props.simulations} onChange={props.setSimulations} step="100" />
-              <Field label="Annual Volatility (σ)" value={props.returnVolAnnual} onChange={props.setReturnVolAnnual} step="0.01" />
-              <Field label="Seed" value={props.seed} onChange={props.setSeed} step="1" />
+              <Field label="Simulations (N)" value={props.simulations} onChange={updateField(props.setSimulations)} step="100" />
+              <Field label="Annual Volatility (σ)" value={props.returnVolAnnual} onChange={updateField(props.setReturnVolAnnual)} step="0.01" />
+              <Field label="Seed" value={props.seed} onChange={updateField(props.setSeed)} step="1" />
             </div>
           </>
         ) : (
@@ -574,10 +611,9 @@ function Simulator(props) {
         </div>
 
         {isRunning ? <div className="loadingBar" /> : null}
-        <div style={{ height: 10 }} />
       </section>
 
-      <aside className="card resultsPanel">
+      <aside ref={resultsRef} className="card resultsPanel">
         <h2 className="h2">Results</h2>
         <p className="muted">Risk and terminal wealth across simulated futures.</p>
 
@@ -585,13 +621,13 @@ function Simulator(props) {
 
         {result ? (
           <div className="resultsGrid">
-            <div className={`resultCard riskCard ${riskTone}`}>
+            <div className="resultCard riskCard">
               <div className="riskTopLine">
                 <div>
                   <div className="resultLabel">Probability of Insolvency</div>
                   <div className="resultValue">{(result.probability_of_insolvency * 100).toFixed(1)}%</div>
                 </div>
-                <span className={`riskBadge ${riskTone}`}>{riskLabel(riskTone)}</span>
+                <span className="riskBadge">Modeled insolvency risk</span>
               </div>
               <div className="resultHint">
                 Chance of failing to cover expenses or required debt payments, even after liquidating investments.
@@ -674,24 +710,29 @@ function Simulator(props) {
 function InsolvencyChart({ baseline, scenario, formatProbabilityDelta }) {
   const baselinePercent = baseline * 100;
   const scenarioPercent = scenario * 100;
+  const scaleMax = Math.min(100, Math.max(baselinePercent, scenarioPercent, 1) * 1.15);
 
   return (
     <div className="chartCard">
       <div className="chartHeader">
         <div>
           <div className="chartTitle">Insolvency comparison</div>
-          <div className="chartSub">Baseline vs current scenario</div>
+          <div className="chartSub">
+            Baseline vs current scenario · scale max {scaleMax.toFixed(1)}%
+          </div>
         </div>
         <div className="chartDelta">{formatProbabilityDelta(scenario, baseline)}</div>
       </div>
 
-      <RiskBar label="Baseline" value={baselinePercent} />
-      <RiskBar label="Scenario" value={scenarioPercent} emphasis />
+      <RiskBar label="Baseline" value={baselinePercent} scaleMax={scaleMax} />
+      <RiskBar label="Scenario" value={scenarioPercent} scaleMax={scaleMax} emphasis />
     </div>
   );
 }
 
-function RiskBar({ label, value, emphasis = false }) {
+function RiskBar({ label, value, scaleMax, emphasis = false }) {
+  const width = Math.max((value / scaleMax) * 100, 1.2);
+
   return (
     <div className="riskBarRow">
       <div className="riskBarLabel">
@@ -701,7 +742,7 @@ function RiskBar({ label, value, emphasis = false }) {
       <div className="riskBarTrack">
         <div
           className={`riskBarFill ${emphasis ? "scenario" : "baseline"}`}
-          style={{ width: `${Math.max(value, 0.8)}%` }}
+          style={{ width: `${width}%` }}
         />
       </div>
     </div>
@@ -777,18 +818,6 @@ function WealthRangeRow({ label, values, position, formatMoney, emphasis = false
       </div>
     </div>
   );
-}
-
-function getRiskTone(probability) {
-  if (probability < 0.05) return "low";
-  if (probability < 0.20) return "elevated";
-  return "high";
-}
-
-function riskLabel(tone) {
-  if (tone === "low") return "Lower modeled risk";
-  if (tone === "elevated") return "Elevated modeled risk";
-  return "High modeled risk";
 }
 
 function Field({ label, value, onChange, step = "1" }) {
