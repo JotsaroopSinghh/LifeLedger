@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import Literal, List, Optional
+from typing import Optional
 
 
 class LifeProfile(BaseModel):
@@ -16,7 +16,6 @@ class LifeProfile(BaseModel):
     transport: float = Field(320, ge=0)
     subscriptions: float = Field(60, ge=0)
     misc: float = Field(260, ge=0)
-
 
 
 class EconomicAssumptions(BaseModel):
@@ -40,6 +39,7 @@ class EconomicAssumptions(BaseModel):
         0.55, ge=0.0, le=1.0, description="Fraction of remaining cash invested each month"
     )
 
+
 class MonteCarloParams(BaseModel):
     simulations: int = Field(3000, ge=100, le=20000)
     return_volatility_annual: float = Field(0.18, ge=0.0, le=1.0)
@@ -49,21 +49,14 @@ class MonteCarloParams(BaseModel):
 class SimulationRequest(BaseModel):
     profile: LifeProfile
     assumptions: EconomicAssumptions
-    mode: Literal["deterministic", "monte_carlo"] = "deterministic"
-    monte_carlo: Optional[MonteCarloParams] = None
+    monte_carlo: MonteCarloParams
 
-
-
-class SimulationResult(BaseModel):
-    months: List[int]
-    cash: List[float]
-    investments: List[float]
-    debt: List[float]
-    net_worth: List[float]
 
 class MonteCarloSummary(BaseModel):
-    probability_of_ruin: float
-    final_net_worth_p10: float
-    final_net_worth_median: float
-    final_net_worth_p90: float
-
+    probability_of_insolvency: float
+    final_net_worth_p10: Optional[float]
+    final_net_worth_median: Optional[float]
+    final_net_worth_p90: Optional[float]
+    insolvent_paths: int
+    surviving_paths: int
+    median_time_to_insolvency_months: Optional[float]

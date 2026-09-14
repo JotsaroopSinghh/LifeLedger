@@ -1,8 +1,8 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .models import SimulationRequest
-from .simulate import run_deterministic, run_monte_carlo
+from .simulate import run_monte_carlo
 
 
 app = FastAPI(
@@ -23,6 +23,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 @app.get("/health")
 def health():
     return {"status": "ok"}
@@ -34,26 +35,15 @@ def schema_example():
     Returns an example SimulationRequest using model default values.
     Useful for frontend integration, testing, and API inspection.
     """
-
     example = SimulationRequest(
         profile={},
-        assumptions={}
+        assumptions={},
+        monte_carlo={}
     )
     return example.model_dump()
 
+
 @app.post("/simulate")
 def simulate(req: SimulationRequest):
-    """
-    Run a financial simulation.
-
-    """
-    if req.mode == "deterministic":
-        return run_deterministic(req)
-
-    if req.mode == "monte_carlo":
-        if req.monte_carlo is None:
-            raise HTTPException(status_code=422, detail="monte_carlo params required for monte_carlo mode")
-        return run_monte_carlo(req)
-
-    raise HTTPException(status_code=400, detail="Invalid mode")
-
+    """Run a Monte Carlo financial simulation."""
+    return run_monte_carlo(req)

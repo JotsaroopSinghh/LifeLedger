@@ -60,7 +60,6 @@ const [seed, setSeed] = useState(42);
         monthly_debt_payment: Number(monthlyDebtPayment),
         invest_rate: Number(investRate),
       },
-      mode: "monte_carlo",
       monte_carlo: {
         simulations: Number(simulations),
         return_volatility_annual: Number(returnVolAnnual),
@@ -498,7 +497,7 @@ function Simulator(props) {
             <div className="resultCard danger">
               <div className="resultLabel">Probability of Insolvency</div>
               <div className="resultValue">
-                {(result.probability_of_ruin * 100).toFixed(1)}%
+                {(result.probability_of_insolvency * 100).toFixed(1)}%
               </div>
               <div className="resultHint">
               Chance you can't cover expenses or required debt payments (even after liquidating investments)
