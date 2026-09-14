@@ -1,5 +1,26 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import "./styles.css";
+
+const EXAMPLE_RESULTS = [
+  {
+    preset: "car_payment",
+    title: "Buy a Car",
+    scenarioRisk: 7.0,
+    delta: 4.2,
+  },
+  {
+    preset: "income_shock",
+    title: "Income Shock",
+    scenarioRisk: 73.5,
+    delta: 70.7,
+  },
+  {
+    preset: "high_rent",
+    title: "High Rent City",
+    scenarioRisk: 99.3,
+    delta: 96.5,
+  },
+];
 
 export default function App() {
   const [view, setView] = useState("landing");
@@ -35,6 +56,18 @@ export default function App() {
   const [baselineResult, setBaselineResult] = useState(null);
   const [error, setError] = useState("");
   const [isRunning, setIsRunning] = useState(false);
+  const [engineStatus, setEngineStatus] = useState("waking");
+
+  useEffect(() => {
+    const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000";
+
+    fetch(`${API_BASE}/health`)
+      .then((res) => {
+        if (!res.ok) throw new Error();
+        setEngineStatus("online");
+      })
+      .catch(() => setEngineStatus("unavailable"));
+  }, []);
 
   const requestBody = useMemo(() => {
     return {
@@ -144,8 +177,10 @@ export default function App() {
 
       setResult(scenarioData);
       setBaselineResult(baselineData);
+      setEngineStatus("online");
     } catch (e) {
       setError(e.message || "Could not reach backend.");
+      setEngineStatus("unavailable");
     } finally {
       setIsRunning(false);
     }
@@ -203,6 +238,11 @@ export default function App() {
     }
   }
 
+  function openExample(preset) {
+    applyPreset(preset);
+    setView("simulator");
+  }
+
   function formatMoney(x) {
     if (x === null || x === undefined) return "—";
     return Number(x).toLocaleString(undefined, { maximumFractionDigits: 0 });
@@ -231,7 +271,11 @@ export default function App() {
       />
 
       {view === "landing" ? (
-        <Landing onEnter={() => setView("simulator")} />
+        <Landing
+          onEnter={() => setView("simulator")}
+          onOpenExample={openExample}
+          engineStatus={engineStatus}
+        />
       ) : (
         <Simulator
           showAdvanced={showAdvanced}
@@ -336,14 +380,26 @@ function TopNav({ onGoLanding, onOpenInfo, showBack, onGoBack }) {
   );
 }
 
-function Landing({ onEnter }) {
+function Landing({ onEnter, onOpenExample, engineStatus }) {
+  const statusText = {
+    waking: "Waking up",
+    online: "Online",
+    unavailable: "Unavailable",
+  }[engineStatus];
+
   return (
     <main className="landingNew">
       <section className="gate">
         <div className="gateTop">
-          <div className="gateTitle">LifeLedger</div>
-          <div className="gateSub">
-            Stochastic Financial Decision Engine
+          <div>
+            <div className="gateTitle">LifeLedger</div>
+            <div className="gateSub">
+              Stochastic Financial Decision Engine
+            </div>
+          </div>
+          <div className={`engineStatus ${engineStatus}`}>
+            <span className="statusDot" />
+            Simulation engine · {statusText}
           </div>
         </div>
 
@@ -407,6 +463,42 @@ function Landing({ onEnter }) {
             </div>
           </div>
         </div>
+
+        <section className="examplesSection">
+          <div className="examplesHeader">
+            <div>
+              <div className="panelHeader">Example simulation results</div>
+              <div className="examplesMeta">
+                Precomputed with seed 42 · 4,000 simulations · 5-year horizon
+              </div>
+            </div>
+            {engineStatus !== "online" ? (
+              <div className="examplesNote">
+                Live calculations may take a moment. These examples are available instantly.
+              </div>
+            ) : null}
+          </div>
+
+          <div className="examplesGrid">
+            {EXAMPLE_RESULTS.map((example) => (
+              <button
+                className="exampleCard"
+                type="button"
+                key={example.preset}
+                onClick={() => onOpenExample(example.preset)}
+              >
+                <div className="exampleTitle">{example.title}</div>
+                <div className="exampleRisk">
+                  <span>2.8%</span>
+                  <span className="exampleArrow">→</span>
+                  <span>{example.scenarioRisk.toFixed(1)}%</span>
+                </div>
+                <div className="exampleDelta">+{example.delta.toFixed(1)} pp insolvency</div>
+                <div className="exampleLink">Explore scenario →</div>
+              </button>
+            ))}
+          </div>
+        </section>
 
         <div className="gateBottom muted">
           Not financial advice.
