@@ -2,24 +2,9 @@ import { useEffect, useMemo, useState } from "react";
 import "./styles.css";
 
 const EXAMPLE_RESULTS = [
-  {
-    preset: "car_payment",
-    title: "Buy a Car",
-    scenarioRisk: 7.0,
-    delta: 4.2,
-  },
-  {
-    preset: "income_shock",
-    title: "Income Shock",
-    scenarioRisk: 73.5,
-    delta: 70.7,
-  },
-  {
-    preset: "high_rent",
-    title: "High Rent City",
-    scenarioRisk: 99.3,
-    delta: 96.5,
-  },
+  { preset: "car_payment", title: "Buy a Car", scenarioRisk: 7.0, delta: 4.2 },
+  { preset: "income_shock", title: "Income Shock", scenarioRisk: 73.5, delta: 70.7 },
+  { preset: "high_rent", title: "High Rent City", scenarioRisk: 99.3, delta: 96.5 },
 ];
 
 export default function App() {
@@ -51,7 +36,6 @@ export default function App() {
   const [seed, setSeed] = useState(42);
 
   const [showAdvanced, setShowAdvanced] = useState(false);
-
   const [result, setResult] = useState(null);
   const [baselineResult, setBaselineResult] = useState(null);
   const [error, setError] = useState("");
@@ -393,9 +377,7 @@ function Landing({ onEnter, onOpenExample, engineStatus }) {
         <div className="gateTop">
           <div>
             <div className="gateTitle">LifeLedger</div>
-            <div className="gateSub">
-              Stochastic Financial Decision Engine
-            </div>
+            <div className="gateSub">Stochastic Financial Decision Engine</div>
           </div>
           <div className={`engineStatus ${engineStatus}`}>
             <span className="statusDot" />
@@ -407,15 +389,9 @@ function Landing({ onEnter, onOpenExample, engineStatus }) {
           <div className="gatePanel">
             <div className="panelHeader">What it does</div>
             <div className="panelBody">
-              <p className="panelLine">
-                • Simulates your finances month-by-month over a chosen horizon.
-              </p>
-              <p className="panelLine">
-                • Adds randomness to investment returns (Monte Carlo).
-              </p>
-              <p className="panelLine">
-                • Outputs a risk metric: <b>Probability of Insolvency</b>.
-              </p>
+              <p className="panelLine">• Simulates your finances month-by-month over a chosen horizon.</p>
+              <p className="panelLine">• Adds randomness to investment returns (Monte Carlo).</p>
+              <p className="panelLine">• Outputs a risk metric: <b>Probability of Insolvency</b>.</p>
             </div>
 
             <div className="panelFooter">
@@ -500,9 +476,7 @@ function Landing({ onEnter, onOpenExample, engineStatus }) {
           </div>
         </section>
 
-        <div className="gateBottom muted">
-          Not financial advice.
-        </div>
+        <div className="gateBottom muted">Not financial advice.</div>
       </section>
     </main>
   );
@@ -524,6 +498,8 @@ function Simulator(props) {
     formatProbabilityDelta,
   } = props;
 
+  const riskTone = result ? getRiskTone(result.probability_of_insolvency) : "low";
+
   return (
     <main className="grid">
       <section className="card">
@@ -534,18 +510,10 @@ function Simulator(props) {
 
         <div className="sectionTitle">Presets</div>
         <div className="presetRow">
-          <button className="btnGhost" type="button" onClick={() => applyPreset("baseline")}>
-            Baseline
-          </button>
-          <button className="btnGhost" type="button" onClick={() => applyPreset("high_rent")}>
-            High Rent City
-          </button>
-          <button className="btnGhost" type="button" onClick={() => applyPreset("car_payment")}>
-            Buy a Car
-          </button>
-          <button className="btnGhost" type="button" onClick={() => applyPreset("income_shock")}>
-            Income Shock
-          </button>
+          <button className="btnGhost" type="button" onClick={() => applyPreset("baseline")}>Baseline</button>
+          <button className="btnGhost" type="button" onClick={() => applyPreset("high_rent")}>High Rent City</button>
+          <button className="btnGhost" type="button" onClick={() => applyPreset("car_payment")}>Buy a Car</button>
+          <button className="btnGhost" type="button" onClick={() => applyPreset("income_shock")}>Income Shock</button>
         </div>
 
         <div className="sectionTitle">Starting State</div>
@@ -566,9 +534,7 @@ function Simulator(props) {
         </div>
 
         <div className="advHeader">
-          <div className="sectionTitle" style={{ margin: 0 }}>
-            Advanced Settings
-          </div>
+          <div className="sectionTitle" style={{ margin: 0 }}>Advanced Settings</div>
           <button className="btnGhost" type="button" onClick={() => setShowAdvanced((v) => !v)}>
             {showAdvanced ? "Hide" : "Show"}
           </button>
@@ -608,85 +574,94 @@ function Simulator(props) {
         </div>
 
         {isRunning ? <div className="loadingBar" /> : null}
-
         <div style={{ height: 10 }} />
       </section>
 
-      <aside className="card">
+      <aside className="card resultsPanel">
         <h2 className="h2">Results</h2>
-        <p className="muted">Summary of thousands of futures.</p>
+        <p className="muted">Risk and terminal wealth across simulated futures.</p>
 
         {error ? <pre className="code codeError">{error}</pre> : null}
 
         {result ? (
           <div className="resultsGrid">
-            <div className="resultCard danger">
-              <div className="resultLabel">Probability of Insolvency</div>
-              <div className="resultValue">
-                {(result.probability_of_insolvency * 100).toFixed(1)}%
+            <div className={`resultCard riskCard ${riskTone}`}>
+              <div className="riskTopLine">
+                <div>
+                  <div className="resultLabel">Probability of Insolvency</div>
+                  <div className="resultValue">{(result.probability_of_insolvency * 100).toFixed(1)}%</div>
+                </div>
+                <span className={`riskBadge ${riskTone}`}>{riskLabel(riskTone)}</span>
               </div>
               <div className="resultHint">
-                Chance you can't cover expenses or required debt payments (even after liquidating investments)
+                Chance of failing to cover expenses or required debt payments, even after liquidating investments.
               </div>
             </div>
 
-            <div className="resultCard">
-              <div className="resultLabel">Downside (10th percentile)</div>
-              <div className="resultValue">${formatMoney(result.final_net_worth_p10)}</div>
-            </div>
+            <div className="wealthCards">
+              <div className="resultCard">
+                <div className="resultLabel">Downside · P10</div>
+                <div className="resultValue">${formatMoney(result.final_net_worth_p10)}</div>
+                <div className="resultHint">Terminal net worth among surviving paths</div>
+              </div>
 
-            <div className="resultCard highlight">
-              <div className="resultLabel">Median Outcome</div>
-              <div className="resultValue">${formatMoney(result.final_net_worth_median)}</div>
-            </div>
+              <div className="resultCard highlight">
+                <div className="resultLabel">Typical · Median</div>
+                <div className="resultValue">${formatMoney(result.final_net_worth_median)}</div>
+                <div className="resultHint">Terminal net worth among surviving paths</div>
+              </div>
 
-            <div className="resultCard">
-              <div className="resultLabel">Upside (90th percentile)</div>
-              <div className="resultValue">${formatMoney(result.final_net_worth_p90)}</div>
+              <div className="resultCard">
+                <div className="resultLabel">Upside · P90</div>
+                <div className="resultValue">${formatMoney(result.final_net_worth_p90)}</div>
+                <div className="resultHint">Terminal net worth among surviving paths</div>
+              </div>
             </div>
 
             {baselineResult ? (
-              <div className="cardSub">
-                <div className="cardSubTitle">Baseline vs Current Scenario</div>
-                <div className="specRow">
-                  <span className="specKey">Insolvency</span>
-                  <span className="specVal">
-                    {(baselineResult.probability_of_insolvency * 100).toFixed(1)}% →{" "}
-                    {(result.probability_of_insolvency * 100).toFixed(1)}%{" "}
-                    ({formatProbabilityDelta(
-                      result.probability_of_insolvency,
-                      baselineResult.probability_of_insolvency
-                    )})
-                  </span>
-                </div>
-                <div className="specRow">
-                  <span className="specKey">P10</span>
-                  <span className="specVal">
-                    ${formatMoney(baselineResult.final_net_worth_p10)} → ${formatMoney(result.final_net_worth_p10)}{" "}
-                    ({formatMoneyDelta(result.final_net_worth_p10, baselineResult.final_net_worth_p10)})
-                  </span>
-                </div>
-                <div className="specRow">
-                  <span className="specKey">Median</span>
-                  <span className="specVal">
-                    ${formatMoney(baselineResult.final_net_worth_median)} → ${formatMoney(result.final_net_worth_median)}{" "}
-                    ({formatMoneyDelta(result.final_net_worth_median, baselineResult.final_net_worth_median)})
-                  </span>
-                </div>
-                <div className="specRow">
-                  <span className="specKey">P90</span>
-                  <span className="specVal">
-                    ${formatMoney(baselineResult.final_net_worth_p90)} → ${formatMoney(result.final_net_worth_p90)}{" "}
-                    ({formatMoneyDelta(result.final_net_worth_p90, baselineResult.final_net_worth_p90)})
-                  </span>
-                </div>
-              </div>
+              <>
+                <InsolvencyChart
+                  baseline={baselineResult.probability_of_insolvency}
+                  scenario={result.probability_of_insolvency}
+                  formatProbabilityDelta={formatProbabilityDelta}
+                />
+                <WealthRangeChart
+                  baseline={baselineResult}
+                  scenario={result}
+                  formatMoney={formatMoney}
+                  formatMoneyDelta={formatMoneyDelta}
+                />
+              </>
             ) : null}
 
-            <div className="cardSub">
-              <div className="cardSubTitle">Request Preview</div>
-              <pre className="code">{JSON.stringify(requestBody, null, 2)}</pre>
+            <div className="pathSummary">
+              <div className="summaryItem">
+                <span className="summaryLabel">Surviving paths</span>
+                <strong>{result.surviving_paths.toLocaleString()}</strong>
+              </div>
+              <div className="summaryItem">
+                <span className="summaryLabel">Insolvent paths</span>
+                <strong>{result.insolvent_paths.toLocaleString()}</strong>
+              </div>
+              <div className="summaryItem">
+                <span className="summaryLabel">Median time to insolvency</span>
+                <strong>
+                  {result.median_time_to_insolvency_months === null
+                    ? "—"
+                    : `${result.median_time_to_insolvency_months} mo`}
+                </strong>
+              </div>
             </div>
+
+            <details className="technicalDetails">
+              <summary>Technical details</summary>
+              <div className="technicalBody">
+                <div className="technicalNote">
+                  Percentiles are calculated from paths that survive the full simulation horizon.
+                </div>
+                <pre className="code">{JSON.stringify(requestBody, null, 2)}</pre>
+              </div>
+            </details>
           </div>
         ) : (
           <div className="emptyState">Run a simulation to see results.</div>
@@ -694,6 +669,126 @@ function Simulator(props) {
       </aside>
     </main>
   );
+}
+
+function InsolvencyChart({ baseline, scenario, formatProbabilityDelta }) {
+  const baselinePercent = baseline * 100;
+  const scenarioPercent = scenario * 100;
+
+  return (
+    <div className="chartCard">
+      <div className="chartHeader">
+        <div>
+          <div className="chartTitle">Insolvency comparison</div>
+          <div className="chartSub">Baseline vs current scenario</div>
+        </div>
+        <div className="chartDelta">{formatProbabilityDelta(scenario, baseline)}</div>
+      </div>
+
+      <RiskBar label="Baseline" value={baselinePercent} />
+      <RiskBar label="Scenario" value={scenarioPercent} emphasis />
+    </div>
+  );
+}
+
+function RiskBar({ label, value, emphasis = false }) {
+  return (
+    <div className="riskBarRow">
+      <div className="riskBarLabel">
+        <span>{label}</span>
+        <strong>{value.toFixed(1)}%</strong>
+      </div>
+      <div className="riskBarTrack">
+        <div
+          className={`riskBarFill ${emphasis ? "scenario" : "baseline"}`}
+          style={{ width: `${Math.max(value, 0.8)}%` }}
+        />
+      </div>
+    </div>
+  );
+}
+
+function WealthRangeChart({ baseline, scenario, formatMoney, formatMoneyDelta }) {
+  const values = [
+    baseline.final_net_worth_p10,
+    baseline.final_net_worth_median,
+    baseline.final_net_worth_p90,
+    scenario.final_net_worth_p10,
+    scenario.final_net_worth_median,
+    scenario.final_net_worth_p90,
+  ].filter((value) => value !== null && value !== undefined);
+
+  if (!values.length) return null;
+
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const span = max - min || 1;
+  const position = (value) => ((value - min) / span) * 100;
+
+  return (
+    <div className="chartCard">
+      <div className="chartHeader">
+        <div>
+          <div className="chartTitle">Terminal wealth range</div>
+          <div className="chartSub">P10 → median → P90 among surviving paths</div>
+        </div>
+        <div className="chartDelta">
+          Median {formatMoneyDelta(scenario.final_net_worth_median, baseline.final_net_worth_median)}
+        </div>
+      </div>
+
+      <WealthRangeRow label="Baseline" values={baseline} position={position} formatMoney={formatMoney} />
+      <WealthRangeRow label="Scenario" values={scenario} position={position} formatMoney={formatMoney} emphasis />
+    </div>
+  );
+}
+
+function WealthRangeRow({ label, values, position, formatMoney, emphasis = false }) {
+  const p10 = values.final_net_worth_p10;
+  const median = values.final_net_worth_median;
+  const p90 = values.final_net_worth_p90;
+
+  if (p10 === null || median === null || p90 === null) {
+    return (
+      <div className="wealthRangeRow">
+        <div className="wealthRangeTop"><span>{label}</span><span>Not available</span></div>
+      </div>
+    );
+  }
+
+  const left = position(p10);
+  const right = position(p90);
+  const medianPos = position(median);
+
+  return (
+    <div className="wealthRangeRow">
+      <div className="wealthRangeTop">
+        <span>{label}</span>
+        <span>${formatMoney(p10)} · ${formatMoney(median)} · ${formatMoney(p90)}</span>
+      </div>
+      <div className="wealthTrack">
+        <div
+          className={`wealthRangeLine ${emphasis ? "scenario" : "baseline"}`}
+          style={{ left: `${left}%`, width: `${Math.max(right - left, 1)}%` }}
+        />
+        <span className="wealthDot p10" style={{ left: `${left}%` }} />
+        <span className={`wealthDot median ${emphasis ? "scenario" : ""}`} style={{ left: `${medianPos}%` }} />
+        <span className="wealthDot p90" style={{ left: `${right}%` }} />
+      </div>
+    </div>
+  );
+}
+
+function getRiskTone(probability) {
+  if (probability < 0.05) return "low";
+  if (probability < 0.20) return "elevated";
+  return "high";
+}
+
+function riskLabel(tone) {
+  if (tone === "low") return "Lower modeled risk";
+  if (tone === "elevated") return "Elevated modeled risk";
+  return "High modeled risk";
 }
 
 function Field({ label, value, onChange, step = "1" }) {
@@ -716,12 +811,8 @@ function InfoModal({ onClose }) {
     <div className="modalOverlay" role="dialog" aria-modal="true">
       <div className="modal">
         <div className="modalTop">
-          <div>
-            <div className="modalTitle">How LifeLedger works</div>
-          </div>
-          <button className="iconBtn" type="button" onClick={onClose} title="Close">
-            ✕
-          </button>
+          <div className="modalTitle">How LifeLedger works</div>
+          <button className="iconBtn" type="button" onClick={onClose} title="Close">✕</button>
         </div>
 
         <div className="modalBody">
@@ -745,7 +836,8 @@ function InfoModal({ onClose }) {
           <div className="modalSection">
             <div className="modalH">Percentiles (p10 / median / p90)</div>
             <div className="muted">
-              Final net worth varies across futures. p10 is a bad-case outcome, median is typical, p90 is a great-case.
+              P10, median, and p90 summarize terminal net worth across paths that survive the full horizon.
+              They show downside, typical, and upside outcomes without mixing in paths that ended early.
             </div>
           </div>
 
@@ -758,9 +850,7 @@ function InfoModal({ onClose }) {
         </div>
 
         <div className="modalBottom">
-          <button className="btnPrimary" type="button" onClick={onClose}>
-            Got it
-          </button>
+          <button className="btnPrimary" type="button" onClick={onClose}>Got it</button>
         </div>
       </div>
     </div>

@@ -1,0 +1,217 @@
+.resultsPanel{overflow:hidden}
+
+.riskCard{grid-column:1 / -1}
+.riskCard.low{
+  border-color:rgba(34,197,94,0.35);
+  background:linear-gradient(145deg, rgba(34,197,94,0.12), rgba(255,255,255,0.04));
+}
+.riskCard.elevated{
+  border-color:rgba(245,158,11,0.38);
+  background:linear-gradient(145deg, rgba(245,158,11,0.13), rgba(255,255,255,0.04));
+}
+.riskCard.high{
+  border-color:rgba(239,68,68,0.42);
+  background:linear-gradient(145deg, rgba(239,68,68,0.15), rgba(255,255,255,0.04));
+}
+
+.riskTopLine{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:14px;
+}
+
+.riskBadge{
+  flex:0 0 auto;
+  border-radius:999px;
+  padding:6px 9px;
+  font-size:10px;
+  font-weight:900;
+  letter-spacing:0.35px;
+}
+.riskBadge.low{
+  color:#86efac;
+  background:rgba(34,197,94,0.13);
+  border:1px solid rgba(34,197,94,0.25);
+}
+.riskBadge.elevated{
+  color:#fcd34d;
+  background:rgba(245,158,11,0.13);
+  border:1px solid rgba(245,158,11,0.25);
+}
+.riskBadge.high{
+  color:#fca5a5;
+  background:rgba(239,68,68,0.13);
+  border:1px solid rgba(239,68,68,0.25);
+}
+
+.wealthCards{
+  grid-column:1 / -1;
+  display:grid;
+  grid-template-columns:repeat(3, minmax(0, 1fr));
+  gap:10px;
+}
+.wealthCards .resultValue{font-size:22px}
+
+.chartCard{
+  grid-column:1 / -1;
+  border:1px solid rgba(255,255,255,0.11);
+  background:rgba(0,0,0,0.15);
+  border-radius:16px;
+  padding:14px;
+}
+.chartHeader{
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+  align-items:flex-start;
+  margin-bottom:14px;
+}
+.chartTitle{
+  font-size:12px;
+  font-weight:900;
+  letter-spacing:0.3px;
+}
+.chartSub{
+  font-size:11px;
+  color:var(--muted);
+  margin-top:3px;
+}
+.chartDelta{
+  font-size:11px;
+  color:#c4b5fd;
+  font-weight:900;
+  white-space:nowrap;
+}
+
+.riskBarRow + .riskBarRow{margin-top:12px}
+.riskBarLabel{
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  margin-bottom:6px;
+  font-size:11px;
+  color:var(--muted);
+}
+.riskBarLabel strong{color:var(--text)}
+.riskBarTrack{
+  height:10px;
+  border-radius:999px;
+  background:rgba(255,255,255,0.07);
+  overflow:hidden;
+}
+.riskBarFill{
+  height:100%;
+  min-width:4px;
+  border-radius:999px;
+}
+.riskBarFill.baseline{background:rgba(255,255,255,0.40)}
+.riskBarFill.scenario{
+  background:linear-gradient(90deg, rgba(124,92,255,0.82), rgba(239,68,68,0.80));
+}
+
+.wealthRangeRow + .wealthRangeRow{margin-top:16px}
+.wealthRangeTop{
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:9px;
+  font-size:11px;
+  color:var(--muted);
+}
+.wealthRangeTop span:last-child{
+  text-align:right;
+  color:rgba(255,255,255,0.78);
+}
+.wealthTrack{
+  position:relative;
+  height:18px;
+  margin:0 5px;
+}
+.wealthTrack::before{
+  content:"";
+  position:absolute;
+  left:0;
+  right:0;
+  top:8px;
+  height:2px;
+  background:rgba(255,255,255,0.07);
+  border-radius:999px;
+}
+.wealthRangeLine{
+  position:absolute;
+  top:7px;
+  height:4px;
+  border-radius:999px;
+  background:rgba(255,255,255,0.42);
+}
+.wealthRangeLine.scenario{background:rgba(124,92,255,0.88)}
+.wealthDot{
+  position:absolute;
+  top:4px;
+  width:10px;
+  height:10px;
+  border-radius:50%;
+  transform:translateX(-50%);
+  background:#9ca3af;
+  border:2px solid #171b2f;
+}
+.wealthDot.median{
+  top:2px;
+  width:14px;
+  height:14px;
+  background:#d1d5db;
+}
+.wealthDot.median.scenario{background:#a78bfa}
+
+.pathSummary{
+  grid-column:1 / -1;
+  display:grid;
+  grid-template-columns:repeat(3, minmax(0, 1fr));
+  gap:8px;
+}
+.summaryItem{
+  border:1px solid rgba(255,255,255,0.09);
+  border-radius:13px;
+  padding:10px;
+  background:rgba(255,255,255,0.035);
+}
+.summaryItem strong{
+  display:block;
+  margin-top:5px;
+  font-size:14px;
+}
+.summaryLabel{
+  font-size:10px;
+  color:var(--muted);
+  line-height:1.35;
+}
+
+.technicalDetails{
+  grid-column:1 / -1;
+  border-top:1px solid rgba(255,255,255,0.10);
+  padding-top:10px;
+}
+.technicalDetails summary{
+  width:max-content;
+  color:rgba(255,255,255,0.67);
+  font-size:11px;
+  font-weight:800;
+  cursor:pointer;
+  user-select:none;
+}
+.technicalBody{margin-top:10px}
+.technicalNote{
+  font-size:11px;
+  color:var(--muted);
+  margin-bottom:8px;
+  line-height:1.45;
+}
+
+@media (max-width: 760px){
+  .wealthCards{grid-template-columns:1fr}
+  .pathSummary{grid-template-columns:1fr}
+  .chartHeader{flex-direction:column}
+  .wealthRangeTop{flex-direction:column;gap:3px}
+  .wealthRangeTop span:last-child{text-align:left}
+}
